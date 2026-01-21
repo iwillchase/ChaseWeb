@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CHASE – Triangle Field with Gallery</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      pointer-events: none;
+      z-index: 2; /* triangles ABOVE buttons by default */
+    }
+
+    .button-bar {
+      position: fixed;
+      bottom: calc((100vh - 65vh) / 4);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 18px;
+      z-index: 1;
+      transition: z-index 0.15s ease;
+    }
+
+    .button-bar.raised { z-index: 4; }
+
+    .button-bar button {
+      padding: 16px 36px;
+      border-radius: 999px;
+      border: 2px solid #ffffffcc;
+      background: #000000dd;
+      color: white;
+      font-size: 20px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: 0.2s ease;
+    }
+
+    .button-bar button:hover {
+      border-color: #ffffff;
+      background: #111111ee;
+      transform: translateY(-2px);
+    }
+
+    .button-bar button.active {
+      background: #f5f5f5;
+      color: #000000;
+      border-color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+    }
+
+    .gallery {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: calc(100vw - 80px);
+      height: 65vh;
+
+      padding: 24px 48px;
+      border-radius: 20px;
+
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(1px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+
+      display: none;
+      align-items: center;
+      z-index: 3;
+      box-sizing: border-box;
+
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.45),
+        0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .gallery.visible { display: flex; }
+
+    .gallery-strip {
+      display: flex;
+      gap: 16px;
+      height: 100%;
+      width: 100%;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+
+    .gallery-strip::-webkit-scrollbar { display: none; }
+
+    .gallery-item {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+    }
+
+    /* Clickable tiles (used by misc) */
+    .gallery-link {
+      flex-shrink: 0;
+      height: 100%;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .gallery-item img,
+    .gallery-link img {
+      height: 100%;
+      max-height: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid #ffffff33;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .gallery-item span,
+    .gallery-link span {
+      color: #ffffffcc;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Hover highlight + "clickable" affordance */
+    .gallery-link .thumb {
+      position: relative;
+      height: 100%;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .gallery-link .cta {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(0,0,0,0.55);
+      color: rgba(255,255,255,0.95);
+      font-size: 12px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+      white-space: nowrap;
+    }
+
+    .gallery-link:hover img,
+    .gallery-link:focus-visible img {
+      transform: translateY(-2px) scale(1.01);
+      border-color: rgba(255,255,255,0.75);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.82), 0 0 12px rgba(255,255,255,0.12);
+    }
+
+    .gallery-link:hover .cta,
+    .gallery-link:focus-visible .cta {
+      opacity: 1;
+      transform: translate(-50%, -52%);
+    }
+
+    .gallery-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid #ffffff66;
+      background: #000000cc;
+      color: #ffffff;
+      font-size: 24px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      user-select: none;
+      transition: 0.15s ease;
+    }
+
+    .gallery-arrow:hover {
+      border-color: #ffffff;
+      background: #111111ee;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    .gallery-arrow.left { left: 12px; }
+    .gallery-arrow.right { right: 12px; }
+
+    .floating-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      width: min(70vw, 700px);
+      padding: 32px 48px;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,0.45),
+        0 4px 10px rgba(0,0,0,0.25);
+      display: none;
+      z-index: 4;
+      box-sizing: border-box;
+      text-align: center;
+      color: white;
+      animation: fadeUp 0.4s ease-out;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .floating-panel.visible { display: flex; }
+
+    .about-photo {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+
+    .floating-panel h2 {
+      margin: 0 0 10px;
+      font-size: 26px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .floating-panel p {
+      margin: 4px 0;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 32rem;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translate(-50%, -48%); }
+      to   { opacity: 1; transform: translate(-50%, -55%); }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="triText"></canvas>
+
+  <!-- Portraits gallery (overlay) -->
+  <div id="portraits-gallery" class="gallery">
+    <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
+    <div class="gallery-strip" id="portraits-strip">
+      <div class="gallery-item">
+        <img src="img\profileLady.jpg" alt="Portrait 1" />
+        <span>Portrait 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\selfPortrait.jpg" alt="Portrait 2" />
+        <span>Portrait 2</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\profileMan.png" alt="Portrait 3" />
+        <span>Portrait 3</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\noPhotoPlease.png" alt="Portrait 4" />
+        <span>Portrait 4</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\noExpression.jpg" alt="Portrait 5" />
+        <span>Portrait 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\oldMan.jpg" alt="Portrait 6" />
+        <span>Portrait 6</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\waterLady.jpg" alt="Portrait 7" />
+        <span>Portrait 7</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\inkLady.jpg" alt="Portrait 8" />
+        <span>Portrait 8</span>
+      </div>
+    </div>
+    <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
+  </div>
+
+  <!-- Journal gallery (overlay) -->
+  <div id="journal-gallery" class="gallery">
+    <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
+    <div class="gallery-strip" id="journal-strip">
+      <div class="gallery-item">
+        <img src="img\Journal_I_Bleed_test.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\naga.jpg" alt="Journal 2" />
+        <span>Journal 2</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Wilde.png" alt="Journal 3" />
+        <span>Journal 3</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_OtherWay.png" alt="Journal 4" />
+        <span>Journal 4</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_CityWarp.png" alt="Journal 5" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_Turtles.png" alt="Journal 5" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_Blonde.png" alt="Journal 5" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_FullDerp2.png" alt="Journal 5" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_HotDog2.png" alt="Journal 5" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_LuvYou.png" alt="Journal 5" />
+        <span>Journal 5</span>
+      </div>
+    </div>
+    <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
+  </div>
+
+  <!-- Misc gallery (overlay) -->
+  <div id="misc-gallery" class="gallery">
+    <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
+    <div class="gallery-strip" id="misc-strip">
+      <!-- Each is a clickable link -->
+      <a class="gallery-link" href="https://cute-grub.itch.io/lost-hats" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="img\LostHatsThumbnail.gif" alt="Misc 1" />
+          <div class="cta"><span>View</span><span aria-hidden="true">↗</span></div>
+        </div>
+        <span>Misc 1</span>
+      </a>
+
+      <a class="gallery-link" href="https://cute-grub.itch.io/dream-cycle" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="img\DreamCycleThumbnail.png" alt="Misc 2" />
+          <div class="cta"><span>View</span><span aria-hidden="true">↗</span></div>
+        </div>
+        <span>Misc 2</span>
+      </a>
+
+      <a class="gallery-link" href="https://example.com/misc-3" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="https://placehold.co/400x600?text=Misc+3" alt="Misc 3" />
+          <div class="cta"><span>View</span><span aria-hidden="true">↗</span></div>
+        </div>
+        <span>Misc 3</span>
+      </a>
+
+      <a class="gallery-link" href="https://example.com/misc-4" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="https://placehold.co/400x600?text=Misc+4" alt="Misc 4" />
+          <div class="cta"><span>View</span><span aria-hidden="true">↗</span></div>
+        </div>
+        <span>Misc 4</span>
+      </a>
+
+      <a class="gallery-link" href="https://example.com/misc-5" target="_blank" rel="noopener">
+        <div class="thumb">
+          <img src="https://placehold.co/400x600?text=Misc+5" alt="Misc 5" />
+          <div class="cta"><span>View</span><span aria-hidden="true">↗</span></div>
+        </div>
+        <span>Misc 5</span>
+      </a>
+    </div>
+    <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
+  </div>
+
+  <!-- ABOUT PANEL -->
+  <div id="about-panel" class="floating-panel">
+    <img class="about-photo" src="https://placehold.co/300x300?text=Chase" alt="Chase portrait" />
+    <h2>CHASE CASGRAIN</h2>
+    <p>Links:</p>
+    <p>itch.io</p>
+    <p></p>
+    <p></p>
+  </div>
+
+  <!-- Button bar -->
+  <div class="button-bar" id="button-bar">
+    <button id="btn-portraits">Portraits</button>
+    <button id="btn-journal">Journal</button>
+    <button id="btn-misc">Misc</button>
+    <button id="btn-about">About</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("triText");
+    const ctx = canvas.getContext("2d");
+
+    const textCanvas = document.createElement("canvas");
+    const textCtx = textCanvas.getContext("2d");
+
+    const WORD = "CHASE";
+    let TRI_SIZE_CURRENT = 12;
+    const DRAW_SPEED = 800;
+    const SAMPLE_THRESHOLD = 10;
+
+    // Scatter physics
+    const SPRING_STRENGTH = 17.0;
+    const DAMPING = 0.85;
+    const INFLUENCE_RADIUS = 340;
+    const MAX_FORCE = 70;
+    let scatterEnabled = true;
+
+    // Mood fade
+    let moodIntensity = 0.0;
+    let moodIntensityTarget = 0.0;
+    const MOOD_FADE_SPEED = 6.0;
+
+    const PALETTES = {
+      journal: [
+        ["#264653","#2a9d8f","#e9c46a","#f4a261","#e76f51"], // warm parchment
+        ["#B38D84","#DEBB95","#F8EACF","#F8F5EC","#C5D7E5"], // cool ink-wash
+        ["#f7f3e8","#bacdb0","#729b79","#475b63","2e2c2f"], // sepia sketchbook
+        ["#331832","#d81e5b","#f0544f","#c6d8d3","#fdf0d5"],
+        ["#cee5f2","#accbe1","#7c98b3","#637081","#536b78"],
+        ["#d9ed92","#b5e48c","#99d98c","#76c893","#52b69a","#34a0a4","#168aad","#1a759f","#1e6091","#184e77"],
+        ["#b38d84","#debb95","#f8eacf","#f8f5ec","#c5d7e5"],
+        ["#393d3f","#fdfdff","#c6c5b9","#62929e","#546a7b"],
+        ["#f8f9fa","#e9ecef","#dee2e6","#ced4da","#adb5bd","#6c757d","#495057","#343a40","#212529"],
+        ["#03071e","#370617","#6a040f","#9d0208","#d00000","#dc2f02","#e85d04","#f48c06","#faa307","#ffba08"],
+        ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6","#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"],
+        ["#cdb4db","#ffc8dd","#ffafcc","#bde0fe","#a2d2ff"],
+        ["#582f0e","#7f4f24","#936639","#a68a64","#b6ad90","#c2c5aa","#a4ac86","#656d4a","#414833","#333d29"],
+        ["#cb997e","#ddbea9","#ffe8d6","#b7b7a4","#a5a58d","#6b705c"],
+        ["#c9cba3","#ffe1a8","#e26d5c","#723d46","#472d30"],
+        ["#a5d8ff","#eff2c0","#bea57d","#71816d","#3a3238"],
+      ],
+      misc: [
+        ["#f8f9fa","#e9ecef","#dee2e6","#ced4da","#adb5bd","#6c757d","#495057","#343a40","#212529"],
+        ["#03071e","#370617","#6a040f","#9d0208","#d00000","#dc2f02","#e85d04","#f48c06","#faa307","#ffba08"],
+        ["#001219","#005f73","#0a9396","#94d2bd","#e9d8a6","#ee9b00","#ca6702","#bb3e03","#ae2012","#9b2226"],
+      ],
+      clean: [["#ffffff"]]
+    };
+
+    const MOODS = {
+      portraits: {
+        triSize: 12,
+        outline: { enabled: true, color: "#ffffff", alpha: 1.0, width: 1.0 },
+        fill:    { enabled: false, ratio: 0.0, alpha: 0.0, paletteKey: "clean", paletteIndex: 0, invert: false },
+        overlay: "portraits"
+      },
+      journal: {
+        triSize: 30,
+        outline: { enabled: false, color: "#ffffff", alpha: 0.95, width: 1.0 },
+        fill:    { enabled: true, ratio: 0.70, alpha: 0.85, paletteKey: "journal", paletteIndex: 0, invert: false },
+        overlay: "journal"
+      },
+      misc: {
+        triSize: 12,
+        outline: { enabled: true, color: "#ffffff", alpha: 1.0, width: 1.4 },
+        fill:    { enabled: true, ratio: 0.18, alpha: 0.28, paletteKey: "misc", paletteIndex: 0, invert: true },
+        overlay: "misc"
+      },
+      about: {
+        triSize: 18,
+        outline: { enabled: false, color: "#ffffff", alpha: 1.0, width: 1.0 },
+        fill:    { enabled: true, ratio: 0.70, alpha: 0.85, paletteKey: "journal", paletteIndex: 2, invert: false },
+        overlay: "about"
+      }
+    };
+
+    let activeSection = null;
+    let currentMood = MOODS.portraits;
+
+    let triangles = [];
+    let visibleCount = 0;
+    let lastTimestamp = 0;
+    let doneBuild = false;
+
+    function pickPaletteColor(paletteKey, paletteIndex) {
+      const group = PALETTES[paletteKey] || [["#ffffff"]];
+      const pal = group[Math.max(0, Math.min(paletteIndex, group.length - 1))];
+      return pal[Math.floor(Math.random() * pal.length)];
+    }
+
+    function rerollFillStylesForMood(mood) {
+      for (const t of triangles) {
+        t.filledFlag = Math.random() < (mood.fill.ratio || 0.0);
+        t.fillColor  = pickPaletteColor(mood.fill.paletteKey, mood.fill.paletteIndex);
+      }
+    }
+
+    function applyMood(mood, { rebuild = false, rerollStyles = true } = {}) {
+      currentMood = mood;
+
+      // Fade fills in/out depending on mood
+      moodIntensityTarget = mood.fill.enabled ? 1.0 : 0.0;
+
+      // Keep TRI_SIZE_CURRENT as-is after the first build.
+      // (If you really want size changes later, we can add a separate "rebuild" button/mode.)
+      TRI_SIZE_CURRENT = mood.triSize;
+
+      // Only rebuild when explicitly asked (we won't do this on button clicks anymore)
+      if (rebuild) {
+        TRI_SIZE_CURRENT = mood.triSize;
+        generateTriangles();
+        visibleCount = 0;
+        doneBuild = false;
+        return;
+      }
+
+      // Same geometry: reroll fills/colors so the new mood has something to draw
+      if (rerollStyles) {
+        rerollFillStylesForMood(mood);
+      }
+    }
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      textCanvas.width = w;
+      textCanvas.height = h;
+
+      generateTriangles();
+      visibleCount = 0;
+      doneBuild = false;
+      lastTimestamp = 0;
+      requestAnimationFrame(animate);
+    }
+
+    function generateTriangles() {
+      const w = textCanvas.width;
+      const h = textCanvas.height;
+
+      textCtx.clearRect(0, 0, w, h);
+
+      let fontSize = Math.min(w / 3, h * 0.6);
+      textCtx.font = `bold ${fontSize}px sans-serif`;
+
+      const metrics = textCtx.measureText(WORD);
+      const targetWidth = w * 0.8;
+      fontSize *= (targetWidth / metrics.width);
+
+      textCtx.font = `bold ${fontSize}px sans-serif`;
+      textCtx.textAlign = "center";
+      textCtx.textBaseline = "middle";
+      textCtx.fillStyle = "white";
+      textCtx.fillText(WORD, w / 2, h / 2);
+
+      const imageData = textCtx.getImageData(0, 0, w, h).data;
+
+      triangles = [];
+      const cell = TRI_SIZE_CURRENT;
+      const rows = Math.ceil(h / cell);
+      const cols = Math.ceil(w / cell);
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const cx = col * cell + cell / 2;
+          const cy = row * cell + cell / 2;
+          if (cx >= w || cy >= h) continue;
+
+          const idx = (Math.floor(cy) * w + Math.floor(cx)) * 4;
+          const alpha = imageData[idx + 3];
+          if (alpha > SAMPLE_THRESHOLD) continue;
+
+          const upright = (row + col) % 2 === 0;
+
+          triangles.push({
+            cx, cy, upright,
+            offsetX: 0, offsetY: 0,
+            vx: 0, vy: 0,
+
+            filledFlag: Math.random() < (currentMood.fill.ratio || 0.0),
+            fillColor: pickPaletteColor(currentMood.fill.paletteKey, currentMood.fill.paletteIndex),
+          });
+        }
+      }
+
+      shuffle(triangles);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function updatePhysics(dt) {
+      const count = Math.floor(visibleCount);
+      for (let i = 0; i < count && i < triangles.length; i++) {
+        const t = triangles[i];
+
+        const ax = -t.offsetX * SPRING_STRENGTH;
+        const ay = -t.offsetY * SPRING_STRENGTH;
+
+        t.vx += ax * dt;
+        t.vy += ay * dt;
+
+        t.vx *= DAMPING;
+        t.vy *= DAMPING;
+
+        t.offsetX += t.vx * dt;
+        t.offsetY += t.vy * dt;
+      }
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+    }
+
+    function drawTriangles(count) {
+      clearCanvas();
+
+      const cell = TRI_SIZE_CURRENT;
+      const o = currentMood.outline;
+      const f = currentMood.fill;
+
+      for (let i = 0; i < count && i < triangles.length; i++) {
+        const t = triangles[i];
+        const half = cell / 2;
+
+        const cx = t.cx + t.offsetX;
+        const cy = t.cy + t.offsetY;
+
+        let p1, p2, p3;
+        if (t.upright) {
+          p1 = { x: cx,         y: cy - half };
+          p2 = { x: cx - half,  y: cy + half };
+          p3 = { x: cx + half,  y: cy + half };
+        } else {
+          p1 = { x: cx,         y: cy + half };
+          p2 = { x: cx - half,  y: cy - half };
+          p3 = { x: cx + half,  y: cy - half };
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.closePath();
+
+        if (f.enabled && moodIntensity > 0.001) {
+          const doFill = f.invert ? !t.filledFlag : t.filledFlag;
+          if (doFill) {
+            ctx.save();
+            ctx.globalAlpha = f.alpha * moodIntensity;
+            ctx.fillStyle = t.fillColor;
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        if (o.enabled) {
+          ctx.save();
+          ctx.globalAlpha = o.alpha;
+          ctx.strokeStyle = o.color;
+          ctx.lineWidth = o.width;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
+    function animate(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      if (!doneBuild) {
+        visibleCount += DRAW_SPEED * dt;
+        if (visibleCount >= triangles.length) {
+          visibleCount = triangles.length;
+          doneBuild = true;
+        }
+      }
+
+      updatePhysics(dt);
+
+      moodIntensity += (moodIntensityTarget - moodIntensity) * Math.min(1, dt * MOOD_FADE_SPEED);
+
+      drawTriangles(Math.floor(visibleCount));
+      requestAnimationFrame(animate);
+    }
+
+    function applyMouseImpulse(x, y) {
+      if (!scatterEnabled) return;
+
+      const count = Math.floor(visibleCount);
+      for (let i = 0; i < count && i < triangles.length; i++) {
+        const t = triangles[i];
+
+        const dx = t.cx - x;
+        const dy = t.cy - y;
+        const dist = Math.hypot(dx, dy);
+        if (dist === 0 || dist > INFLUENCE_RADIUS) continue;
+
+        const strength = 1 - dist / INFLUENCE_RADIUS;
+        const force = MAX_FORCE * strength;
+
+        t.vx += (dx / dist) * force;
+        t.vy += (dy / dist) * force;
+      }
+    }
+
+    window.addEventListener("mousemove", (e) => applyMouseImpulse(e.clientX, e.clientY));
+    window.addEventListener("touchmove", (e) => {
+      const touch = e.touches[0];
+      if (touch) applyMouseImpulse(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    window.addEventListener("resize", resize);
+
+    // ===== UI =====
+    const buttonBar        = document.getElementById("button-bar");
+    const portraitsBtn     = document.getElementById("btn-portraits");
+    const journalBtn       = document.getElementById("btn-journal");
+    const miscBtn          = document.getElementById("btn-misc");
+    const aboutBtn         = document.getElementById("btn-about");
+
+    const portraitsGallery = document.getElementById("portraits-gallery");
+    const portraitsStrip   = document.getElementById("portraits-strip");
+    const journalGallery   = document.getElementById("journal-gallery");
+    const journalStrip     = document.getElementById("journal-strip");
+    const miscGallery      = document.getElementById("misc-gallery");
+    const miscStrip        = document.getElementById("misc-strip");
+    const aboutPanel       = document.getElementById("about-panel");
+
+    function updateRaisedState() {
+      const anySectionActive = (activeSection !== null);
+      buttonBar.classList.toggle("raised", anySectionActive);
+    }
+
+    function setActiveButton(section) {
+      portraitsBtn.classList.toggle("active", section === "portraits");
+      journalBtn.classList.toggle("active", section === "journal");
+      miscBtn.classList.toggle("active", section === "misc");
+      aboutBtn.classList.toggle("active", section === "about");
+    }
+
+    function closeAllOverlays() {
+      portraitsGallery.classList.remove("visible");
+      journalGallery.classList.remove("visible");
+      miscGallery.classList.remove("visible");
+      aboutPanel.classList.remove("visible");
+    }
+
+    function showOverlay(name) {
+      closeAllOverlays();
+      if (name === "portraits") portraitsGallery.classList.add("visible");
+      if (name === "journal") journalGallery.classList.add("visible");
+      if (name === "misc") miscGallery.classList.add("visible");
+      if (name === "about") aboutPanel.classList.add("visible");
+    }
+
+    function activateSection(section, evt) {
+      if (activeSection === section) {
+        activeSection = null;
+        setActiveButton(null);
+        closeAllOverlays();
+        updateRaisedState();
+        return;
+      }
+
+      activeSection = section;
+      setActiveButton(section);
+
+      const mood = MOODS[section] || MOODS.portraits;
+
+      // Shift+click: cycle palette for that section
+      if (evt && evt.shiftKey) {
+        const key = mood.fill.paletteKey;
+        if (PALETTES[key] && PALETTES[key].length > 1) {
+          mood.fill.paletteIndex = (mood.fill.paletteIndex + 1) % PALETTES[key].length;
+        }
+      }
+
+      applyMood(mood, { rebuild: false, rerollStyles: true });
+      showOverlay(mood.overlay);
+
+      updateRaisedState();
+    }
+
+    portraitsBtn.addEventListener("click", (e) => activateSection("portraits", e));
+    journalBtn.addEventListener("click", (e) => activateSection("journal", e));
+    miscBtn.addEventListener("click", (e) => activateSection("misc", e));
+    aboutBtn.addEventListener("click", (e) => activateSection("about", e));
+
+    // Arrow scrolling for all galleries
+    const SCROLL_AMOUNT = 350;
+
+    function attachArrows(galleryEl, stripEl) {
+      const left = galleryEl.querySelector(".gallery-arrow.left");
+      const right = galleryEl.querySelector(".gallery-arrow.right");
+      left.addEventListener("click", () => stripEl.scrollBy({ left: -SCROLL_AMOUNT, behavior: "smooth" }));
+      right.addEventListener("click", () => stripEl.scrollBy({ left: SCROLL_AMOUNT, behavior: "smooth" }));
+    }
+
+    attachArrows(portraitsGallery, portraitsStrip);
+    attachArrows(journalGallery, journalStrip);
+    attachArrows(miscGallery, miscStrip);
+
+    // Start
+    resize();
+  </script>
+</body>
+</html>
