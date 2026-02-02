@@ -324,9 +324,49 @@
   </div>
 
   <!-- Journal gallery (overlay) -->
-  <div id="journal-gallery" class="gallery">
+  <div id="journal-gallery" class="gallery" style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px);">
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="journal-strip">
+      <div class="gallery-item">
+        <img src="img\Journal_YourFear2.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_LostEye.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Masks.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Mulaney.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Insane.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Swim.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Operation.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_Dissected.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_BigPlant.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img\Journal_YUP2.png"alt="Journal 1" />
+        <span>Journal 1</span>
+      </div>
       <div class="gallery-item">
         <img src="img\Journal_I_Bleed_test.png"alt="Journal 1" />
         <span>Journal 1</span>
@@ -352,19 +392,39 @@
         <span>Journal 5</span>
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Blonde.png" alt="Journal 5" />
+        <img src="img/Journal_Blonde.png" alt="Journal 6" />
         <span>Journal 5</span>
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_FullDerp2.png" alt="Journal 5" />
+        <img src="img/Journal_FullDerp2.png" alt="Journal 7" />
         <span>Journal 5</span>
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_HotDog2.png" alt="Journal 5" />
+        <img src="img/Journal_HotDog2.png" alt="Journal 8" />
         <span>Journal 5</span>
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_LuvYou.png" alt="Journal 5" />
+        <img src="img/Journal_LuvYou.png" alt="Journal 9" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_DRAW.png" alt="Journal 10" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_NotMe.png" alt="Journal 10" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_CrowCob.png" alt="Journal 10" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_DogBoat.png" alt="Journal 10" />
+        <span>Journal 5</span>
+      </div>
+      <div class="gallery-item">
+        <img src="img/Journal_GotHat.png" alt="Journal 10" />
         <span>Journal 5</span>
       </div>
     </div>
@@ -372,7 +432,7 @@
   </div>
 
   <!-- Misc gallery (overlay) -->
-  <div id="misc-gallery" class="gallery">
+  <div id="misc-gallery" class="gallery" style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px);">
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="misc-strip">
       <!-- Each is a clickable link -->
@@ -394,7 +454,7 @@
 
       <a class="gallery-link" href="https://example.com/misc-3" target="_blank" rel="noopener">
         <div class="thumb">
-          <img src="https://placehold.co/400x600?text=Misc+3" alt="Misc 3" />
+          <img src="img/Colorbase.png" alt="Misc 3" />
           <div class="cta"><span>View</span><span aria-hidden="true">↗</span></div>
         </div>
         <span>Misc 3</span>
@@ -421,12 +481,11 @@
 
   <!-- ABOUT PANEL -->
   <div id="about-panel" class="floating-panel">
-    <img class="about-photo" src="https://placehold.co/300x300?text=Chase" alt="Chase portrait" />
-    <h2>CHASE CASGRAIN</h2>
-    <p>Links:</p>
-    <p>itch.io</p>
+    <img class="about-photo" src="img/PXL_20220506_235857693.MP.png" alt="Chase portrait" />
+    <h2>CHASE</h2>
+    <p>Link: https://cute-grub.itch.io</p>
     <p></p>
-    <p></p>
+    <p>Contact: wchasec@gmail.com</p>
   </div>
 
   <!-- Button bar -->
@@ -498,13 +557,13 @@
       journal: {
         triSize: 30,
         outline: { enabled: false, color: "#ffffff", alpha: 0.95, width: 1.0 },
-        fill:    { enabled: true, ratio: 0.70, alpha: 0.85, paletteKey: "journal", paletteIndex: 0, invert: false },
+        fill:    { enabled: true, ratio: 0.70, alpha: 0.85, paletteKey: "journal", paletteIndex: 1, invert: false },
         overlay: "journal"
       },
       misc: {
-        triSize: 12,
-        outline: { enabled: true, color: "#ffffff", alpha: 1.0, width: 1.4 },
-        fill:    { enabled: true, ratio: 0.18, alpha: 0.28, paletteKey: "misc", paletteIndex: 0, invert: true },
+        triSize: 30,
+        outline: { enabled: false, color: "#ffffff", alpha: 0.95, width: 1.0 },
+        fill:    { enabled: true, ratio: 0.70, alpha: 0.85, paletteKey: "journal", paletteIndex: 0, invert: false },
         overlay: "misc"
       },
       about: {
