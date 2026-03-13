@@ -139,6 +139,10 @@
       transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     }
 
+    .gallery-item img {
+      cursor: zoom-in;
+    }
+
     .gallery-item span,
     .gallery-link span {
       color: #ffffffcc;
@@ -273,6 +277,88 @@
       max-width: 32rem;
     }
 
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      padding: 24px;
+      box-sizing: border-box;
+      cursor: zoom-out;
+    }
+
+    .lightbox.visible {
+      display: flex;
+    }
+
+    .lightbox img {
+      display: block;
+      max-width: min(96vw, 1800px);
+      max-height: 96vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255,255,255,0.18);
+      cursor: zoom-out;
+    }
+
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.42);
+      color: white;
+      font-size: 32px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      backdrop-filter: blur(8px);
+      transition: 0.18s ease;
+    }
+
+    .lightbox-nav:hover {
+      background: rgba(20,20,20,0.72);
+      border-color: rgba(255,255,255,0.65);
+      box-shadow: 0 0 16px rgba(255,255,255,0.12);
+    }
+
+    .lightbox-nav.left {
+      left: 20px;
+    }
+
+    .lightbox-nav.right {
+      right: 20px;
+    }
+
+    .lightbox-counter {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translate(-50%, -48%); }
       to   { opacity: 1; transform: translate(-50%, -55%); }
@@ -320,103 +406,103 @@
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="journal-strip">
       <div class="gallery-item">
-        <img src="img\Journal_BackToSleep3.png"alt="Journal 1" />
+        <img src="img\Journal_BackToSleep3.png" alt="Journal 1" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_LostEye.png"alt="Journal 1" />
+        <img src="img\Journal_LostEye.png" alt="Journal 2" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Masks.png"alt="Journal 1" />
+        <img src="img\Journal_Masks.png" alt="Journal 3" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Mulaney.png"alt="Journal 1" />
+        <img src="img\Journal_Mulaney.png" alt="Journal 4" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Insane.png"alt="Journal 1" />
+        <img src="img\Journal_Insane.png" alt="Journal 5" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Swim.png"alt="Journal 1" />
+        <img src="img\Journal_Swim.png" alt="Journal 6" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Operation.png"alt="Journal 1" />
+        <img src="img\Journal_Operation.png" alt="Journal 7" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Parts.png"alt="Journal 1" />
+        <img src="img\Journal_Parts.png" alt="Journal 8" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_BigPlant.png"alt="Journal 1" />
+        <img src="img\Journal_BigPlant.png" alt="Journal 9" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_YUP2.png"alt="Journal 1" />
+        <img src="img\Journal_YUP2.png" alt="Journal 10" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_I_Bleed_test.png"alt="Journal 1" />
+        <img src="img\Journal_I_Bleed_test.png" alt="Journal 11" />
       </div>
       <div class="gallery-item">
-        <img src="img\naga.jpg" alt="Journal 2" />
+        <img src="img\naga.jpg" alt="Journal 12" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Wilde.png" alt="Journal 3" />
+        <img src="img\Journal_Wilde.png" alt="Journal 13" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_OtherWay.png" alt="Journal 4" />
+        <img src="img/Journal_OtherWay.png" alt="Journal 14" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_CityWarp.png" alt="Journal 5" />
+        <img src="img/Journal_CityWarp.png" alt="Journal 15" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Turtles.png" alt="Journal 5" />
+        <img src="img/Journal_Turtles.png" alt="Journal 16" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Blonde.png" alt="Journal 6" />
+        <img src="img/Journal_Blonde.png" alt="Journal 17" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_FullDerp2.png" alt="Journal 7" />
+        <img src="img/Journal_FullDerp2.png" alt="Journal 18" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_HotDog2.png" alt="Journal 8" />
+        <img src="img/Journal_HotDog2.png" alt="Journal 19" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_LuvYou.png" alt="Journal 9" />
+        <img src="img/Journal_LuvYou.png" alt="Journal 20" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_DRAW.png" alt="Journal 10" />
+        <img src="img/Journal_DRAW.png" alt="Journal 21" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_NotMe.png" alt="Journal 10" />
+        <img src="img/Journal_NotMe.png" alt="Journal 22" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_CrowCob.png" alt="Journal 10" />
+        <img src="img/Journal_CrowCob.png" alt="Journal 23" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_DogBoat.png" alt="Journal 10" />
+        <img src="img/Journal_DogBoat.png" alt="Journal 24" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_GotHat.png" alt="Journal 10" />
+        <img src="img/Journal_GotHat.png" alt="Journal 25" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_YourFear2.png"alt="Journal 1" />
+        <img src="img\Journal_YourFear2.png" alt="Journal 26" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_CrackersPlease.png"alt="Journal 1" />
+        <img src="img\Journal_CrackersPlease.png" alt="Journal 27" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_FishTree.png" />
+        <img src="img\Journal_FishTree.png" alt="Journal 28" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Cells.png"alt="Journal 1" />
+        <img src="img\Journal_Cells.png" alt="Journal 29" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Split2.png"alt="Journal 1" />
+        <img src="img\Journal_Split2.png" alt="Journal 30" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_SoftInTheMiddle.png"alt="Journal 1" />
+        <img src="img\Journal_SoftInTheMiddle.png" alt="Journal 31" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_Drift.png"alt="Journal 1" />
+        <img src="img\Journal_Drift.png" alt="Journal 32" />
       </div>
       <div class="gallery-item">
-        <img src="img\Journal_DerpDog.png"alt="Journal 1" />
+        <img src="img\Journal_DerpDog.png" alt="Journal 33" />
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -449,7 +535,7 @@
       </a>
 
       <div class="gallery-item">
-        <img src="img/Colorbase.png"alt="Misc 4" />
+        <img src="img/Colorbase.png" alt="Misc 4" />
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -470,6 +556,14 @@
     <button id="btn-journal">Journal</button>
     <button id="btn-misc">Misc</button>
     <button id="btn-about">About</button>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <button id="lightbox-prev" class="lightbox-nav left" type="button" aria-label="Previous image">‹</button>
+    <img id="lightbox-image" src="" alt="" />
+    <button id="lightbox-next" class="lightbox-nav right" type="button" aria-label="Next image">›</button>
+    <div id="lightbox-counter" class="lightbox-counter"></div>
   </div>
 
   <script>
@@ -499,9 +593,9 @@
 
     const PALETTES = {
       journal: [
-        ["#264653","#2a9d8f","#e9c46a","#f4a261","#e76f51"], // warm parchment
-        ["#B38D84","#DEBB95","#F8EACF","#F8F5EC","#C5D7E5"], // cool ink-wash
-        ["#f7f3e8","#bacdb0","#729b79","#475b63","2e2c2f"], // sepia sketchbook
+        ["#264653","#2a9d8f","#e9c46a","#f4a261","#e76f51"],
+        ["#B38D84","#DEBB95","#F8EACF","#F8F5EC","#C5D7E5"],
+        ["#f7f3e8","#bacdb0","#729b79","#475b63","2e2c2f"],
         ["#331832","#d81e5b","#f0544f","#c6d8d3","#fdf0d5"],
         ["#cee5f2","#accbe1","#7c98b3","#637081","#536b78"],
         ["#d9ed92","#b5e48c","#99d98c","#76c893","#52b69a","#34a0a4","#168aad","#1a759f","#1e6091","#184e77"],
@@ -574,15 +668,9 @@
 
     function applyMood(mood, { rebuild = false, rerollStyles = true } = {}) {
       currentMood = mood;
-
-      // Fade fills in/out depending on mood
       moodIntensityTarget = mood.fill.enabled ? 1.0 : 0.0;
-
-      // Keep TRI_SIZE_CURRENT as-is after the first build.
-      // (If you really want size changes later, we can add a separate "rebuild" button/mode.)
       TRI_SIZE_CURRENT = mood.triSize;
 
-      // Only rebuild when explicitly asked (we won't do this on button clicks anymore)
       if (rebuild) {
         TRI_SIZE_CURRENT = mood.triSize;
         generateTriangles();
@@ -591,7 +679,6 @@
         return;
       }
 
-      // Same geometry: reroll fills/colors so the new mood has something to draw
       if (rerollStyles) {
         rerollFillStylesForMood(mood);
       }
@@ -658,7 +745,6 @@
             cx, cy, upright,
             offsetX: 0, offsetY: 0,
             vx: 0, vy: 0,
-
             filledFlag: Math.random() < (currentMood.fill.ratio || 0.0),
             fillColor: pickPaletteColor(currentMood.fill.paletteKey, currentMood.fill.paletteIndex),
           });
@@ -815,6 +901,16 @@
     const miscStrip        = document.getElementById("misc-strip");
     const aboutPanel       = document.getElementById("about-panel");
 
+    const lightbox         = document.getElementById("lightbox");
+    const lightboxImage    = document.getElementById("lightbox-image");
+    const lightboxPrev     = document.getElementById("lightbox-prev");
+    const lightboxNext     = document.getElementById("lightbox-next");
+    const lightboxCounter  = document.getElementById("lightbox-counter");
+
+    let lightboxImages = [];
+    let lightboxIndex = -1;
+    let lightboxSourceGallery = null;
+
     function updateRaisedState() {
       const anySectionActive = (activeSection !== null);
       buttonBar.classList.toggle("raised", anySectionActive);
@@ -847,6 +943,7 @@
         activeSection = null;
         setActiveButton(null);
         closeAllOverlays();
+        closeLightbox();
         updateRaisedState();
         return;
       }
@@ -856,7 +953,6 @@
 
       const mood = MOODS[section] || MOODS.portraits;
 
-      // Shift+click: cycle palette for that section
       if (evt && evt.shiftKey) {
         const key = mood.fill.paletteKey;
         if (PALETTES[key] && PALETTES[key].length > 1) {
@@ -866,7 +962,6 @@
 
       applyMood(mood, { rebuild: false, rerollStyles: true });
       showOverlay(mood.overlay);
-
       updateRaisedState();
     }
 
@@ -885,9 +980,102 @@
       right.addEventListener("click", () => stripEl.scrollBy({ left: SCROLL_AMOUNT, behavior: "smooth" }));
     }
 
+    function setLightboxImage(index) {
+      if (!lightboxImages.length) return;
+
+      if (index < 0) index = lightboxImages.length - 1;
+      if (index >= lightboxImages.length) index = 0;
+
+      lightboxIndex = index;
+      const imgEl = lightboxImages[lightboxIndex];
+      lightboxImage.src = imgEl.src;
+      lightboxImage.alt = imgEl.alt || "";
+      lightboxCounter.textContent = `${lightboxIndex + 1} / ${lightboxImages.length}`;
+
+      if (lightboxSourceGallery && imgEl.closest(".gallery-item")) {
+        imgEl.closest(".gallery-item").scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center"
+        });
+      }
+    }
+
+    function openLightbox(images, index, sourceGallery) {
+      lightboxImages = images;
+      lightboxSourceGallery = sourceGallery;
+      lightbox.classList.add("visible");
+      lightbox.setAttribute("aria-hidden", "false");
+      setLightboxImage(index);
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("visible");
+      lightbox.setAttribute("aria-hidden", "true");
+      lightboxImage.src = "";
+      lightboxImage.alt = "";
+      lightboxCounter.textContent = "";
+      lightboxImages = [];
+      lightboxIndex = -1;
+      lightboxSourceGallery = null;
+    }
+
+    function showPrevLightboxImage() {
+      if (!lightbox.classList.contains("visible")) return;
+      setLightboxImage(lightboxIndex - 1);
+    }
+
+    function showNextLightboxImage() {
+      if (!lightbox.classList.contains("visible")) return;
+      setLightboxImage(lightboxIndex + 1);
+    }
+
+    function attachLightboxToGalleryImages(galleryEl) {
+      const images = Array.from(galleryEl.querySelectorAll(".gallery-item img"));
+
+      images.forEach((img, index) => {
+        img.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openLightbox(images, index, galleryEl);
+        });
+      });
+    }
+
     attachArrows(portraitsGallery, portraitsStrip);
     attachArrows(journalGallery, journalStrip);
     attachArrows(miscGallery, miscStrip);
+
+    attachLightboxToGalleryImages(portraitsGallery);
+    attachLightboxToGalleryImages(journalGallery);
+
+    lightbox.addEventListener("click", closeLightbox);
+
+    lightboxImage.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeLightbox();
+    });
+
+    lightboxPrev.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showPrevLightboxImage();
+    });
+
+    lightboxNext.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showNextLightboxImage();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!lightbox.classList.contains("visible")) return;
+
+      if (e.key === "Escape") {
+        closeLightbox();
+      } else if (e.key === "ArrowLeft") {
+        showPrevLightboxImage();
+      } else if (e.key === "ArrowRight") {
+        showNextLightboxImage();
+      }
+    });
 
     // Start
     resize();
