@@ -483,7 +483,8 @@
 
     .button-bar button.has-new.active::after { background: #000000; box-shadow: none; }
 
-    /* Caption on tiles that aren't links (e.g. ColorBase) */
+    /* Caption on tiles that aren't links (e.g. ColorBase).
+       Looks and behaves like the "Play Game!" label: appears on hover, always shown on phones. */
     .tile-caption {
       position: absolute;
       left: 50%;
@@ -492,13 +493,42 @@
       padding: 10px 14px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.35);
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.55);
       color: rgba(255,255,255,0.95);
       font-size: 12px;
       letter-spacing: 0.10em;
       text-transform: uppercase;
       white-space: nowrap;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+    }
+
+    .gallery-item.captioned img { cursor: default; } /* no full-size viewer in Misc */
+
+    .gallery-item.captioned:hover img {
+      transform: translateY(-2px) scale(1.01);
+      border-color: rgba(255,255,255,0.75);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.82), 0 0 12px rgba(255,255,255,0.12);
+    }
+
+    .gallery-item.captioned:hover .tile-caption {
+      opacity: 1;
+      transform: translate(-50%, -52%);
+    }
+
+    /* Phones: always shown, and sits at the image's bottom edge so the ‹ › arrows don't cover it
+       (same image-size math as the NEW tag) */
+    .phone .tile-caption,
+    .phone .gallery-item.captioned:hover .tile-caption {
+      opacity: 1;
+      font-size: 13px;
+      padding: 10px 14px;
+      top: auto;
+      bottom: calc(50% - min(66.67cqw, 50cqh) + 14px);
+      transform: translateX(-50%);
     }
 
     .contact-btn {
@@ -824,7 +854,7 @@
         </div>
       </a>
 
-      <div class="gallery-item">
+      <div class="gallery-item captioned">
         <img loading="lazy" src="img/Colorbase.webp" alt="ColorBase: a number system made of colors" />
         <div class="tile-caption">ColorBase · work in progress</div>
       </div>
