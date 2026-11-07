@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>IWILLCHASE</title>
   <style>
     html, body {
@@ -12,13 +13,15 @@
       background: black;
       overflow: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: manipulation; /* no double-tap zoom on phones */
+      -webkit-tap-highlight-color: transparent;
     }
 
     canvas {
       position: fixed;
       inset: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       display: block;
       pointer-events: none;
       z-index: 2; /* triangles ABOVE buttons by default */
@@ -51,10 +54,12 @@
       transition: 0.2s ease;
     }
 
-    .button-bar button:hover {
-      border-color: #ffffff;
-      background: #111111ee;
-      transform: translateY(-2px);
+    @media (hover: hover) {
+      .button-bar button:hover {
+        border-color: #ffffff;
+        background: #111111ee;
+        transform: translateY(-2px);
+      }
     }
 
     .button-bar button.active {
@@ -298,6 +303,7 @@
     .lightbox img {
       display: block;
       width: auto;
+      max-width: 100%;
       height: calc(100vh - 48px);
       object-fit: contain;
       border-radius: 12px;
@@ -357,6 +363,139 @@
       border: 1px solid rgba(255,255,255,0.12);
     }
 
+    .about-link {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .gallery-count { display: none; }
+
+    /* ===== Phone mode (html.phone is set by script) ===== */
+    .phone .button-bar {
+      left: 16px;
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      transform: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .phone .button-bar button {
+      padding: 16px 8px;
+      font-size: 18px;
+    }
+
+    .phone .gallery {
+      top: calc(16px + env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      bottom: calc(160px + env(safe-area-inset-bottom));
+      width: auto;
+      height: auto;
+      transform: none;
+      padding: 12px;
+    }
+
+    /* One image per screen: swipe to the next one */
+    .phone .gallery-strip {
+      gap: 0;
+      scroll-snap-type: x mandatory;
+    }
+
+    .phone .gallery-item,
+    .phone .gallery-link {
+      flex: 0 0 100%;
+      width: 100%;
+      justify-content: center;
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+    }
+
+    .phone .gallery-link .thumb {
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone .gallery-item img,
+    .phone .gallery-link img {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: auto;
+      object-fit: contain;
+      cursor: default;
+    }
+
+    .phone .gallery-link .cta {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+      font-size: 15px;
+      padding: 12px 18px;
+    }
+
+    .phone .gallery-arrow {
+      width: 44px;
+      height: 44px;
+      background: #000000aa;
+    }
+
+    .phone .gallery-arrow.left { left: 4px; }
+    .phone .gallery-arrow.right { right: 4px; }
+
+    .phone .gallery-count {
+      display: block;
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.55);
+      pointer-events: none;
+    }
+
+    .phone .floating-panel {
+      top: calc(50% - 70px);
+      width: calc(100vw - 32px);
+      padding: 24px 20px;
+    }
+
+    .phone .floating-panel p { font-size: 17px; }
+
+    /* Phone held sideways: buttons in one row so the art gets the height */
+    @media (orientation: landscape) {
+      .phone .button-bar {
+        left: 50%;
+        right: auto;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+      }
+
+      .phone .button-bar button {
+        padding: 10px 20px;
+        font-size: 16px;
+      }
+
+      .phone .gallery {
+        top: 10px;
+        bottom: calc(66px + env(safe-area-inset-bottom));
+        left: calc(16px + env(safe-area-inset-left));
+        right: calc(16px + env(safe-area-inset-right));
+      }
+
+      .phone .floating-panel { top: calc(50% - 30px); padding: 16px 20px; }
+      .phone .about-photo { width: 80px; height: 80px; margin-bottom: 8px; }
+    }
+
     @keyframes fadeUp {
       from { opacity: 0; transform: translate(-50%, -48%); }
       to   { opacity: 1; transform: translate(-50%, -55%); }
@@ -372,28 +511,28 @@
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="portraits-strip">
       <div class="gallery-item">
-        <img src="img/profileLady.jpg" alt="Portrait 1" />
+        <img loading="lazy" src="img/profileLady.jpg" alt="Portrait 1" />
       </div>
       <div class="gallery-item">
-        <img src="img/selfPortrait.jpg" alt="Portrait 2" />
+        <img loading="lazy" src="img/selfPortrait.jpg" alt="Portrait 2" />
       </div>
       <div class="gallery-item">
-        <img src="img/profileMan.png" alt="Portrait 3" />
+        <img loading="lazy" src="img/profileMan.png" alt="Portrait 3" />
       </div>
       <div class="gallery-item">
-        <img src="img/noPhotoPlease.png" alt="Portrait 4" />
+        <img loading="lazy" src="img/noPhotoPlease.png" alt="Portrait 4" />
       </div>
       <div class="gallery-item">
-        <img src="img/noExpression.jpg" alt="Portrait 5" />
+        <img loading="lazy" src="img/noExpression.jpg" alt="Portrait 5" />
       </div>
       <div class="gallery-item">
-        <img src="img/oldMan.jpg" alt="Portrait 6" />
+        <img loading="lazy" src="img/oldMan.jpg" alt="Portrait 6" />
       </div>
       <div class="gallery-item">
-        <img src="img/waterLady.jpg" alt="Portrait 7" />
+        <img loading="lazy" src="img/waterLady.jpg" alt="Portrait 7" />
       </div>
       <div class="gallery-item">
-        <img src="img/inkLady.jpg" alt="Portrait 8" />
+        <img loading="lazy" src="img/inkLady.jpg" alt="Portrait 8" />
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -404,103 +543,103 @@
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="journal-strip">
       <div class="gallery-item">
-        <img src="img/Journal_BackToSleep3.png" alt="Journal 1" />
+        <img loading="lazy" src="img/Journal_BackToSleep3.png" alt="Journal 1" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_LostEye.png" alt="Journal 2" />
+        <img loading="lazy" src="img/Journal_LostEye.png" alt="Journal 2" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Masks.png" alt="Journal 3" />
+        <img loading="lazy" src="img/Journal_Masks.png" alt="Journal 3" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Mulaney.png" alt="Journal 4" />
+        <img loading="lazy" src="img/Journal_Mulaney.png" alt="Journal 4" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Insane.png" alt="Journal 5" />
+        <img loading="lazy" src="img/Journal_Insane.png" alt="Journal 5" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Swim.png" alt="Journal 6" />
+        <img loading="lazy" src="img/Journal_Swim.png" alt="Journal 6" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Operation.png" alt="Journal 7" />
+        <img loading="lazy" src="img/Journal_Operation.png" alt="Journal 7" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Parts.png" alt="Journal 8" />
+        <img loading="lazy" src="img/Journal_Parts.png" alt="Journal 8" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_BigPlant.png" alt="Journal 9" />
+        <img loading="lazy" src="img/Journal_BigPlant.png" alt="Journal 9" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_YUP2.png" alt="Journal 10" />
+        <img loading="lazy" src="img/Journal_YUP2.png" alt="Journal 10" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_I_Bleed_test.png" alt="Journal 11" />
+        <img loading="lazy" src="img/Journal_I_Bleed_test.png" alt="Journal 11" />
       </div>
       <div class="gallery-item">
-        <img src="img/naga.jpg" alt="Journal 12" />
+        <img loading="lazy" src="img/naga.jpg" alt="Journal 12" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Wilde.png" alt="Journal 13" />
+        <img loading="lazy" src="img/Journal_Wilde.png" alt="Journal 13" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_OtherWay.png" alt="Journal 14" />
+        <img loading="lazy" src="img/Journal_OtherWay.png" alt="Journal 14" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_CityWarp.png" alt="Journal 15" />
+        <img loading="lazy" src="img/Journal_CityWarp.png" alt="Journal 15" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Turtles.png" alt="Journal 16" />
+        <img loading="lazy" src="img/Journal_Turtles.png" alt="Journal 16" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Blonde.png" alt="Journal 17" />
+        <img loading="lazy" src="img/Journal_Blonde.png" alt="Journal 17" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_FullDerp2.png" alt="Journal 18" />
+        <img loading="lazy" src="img/Journal_FullDerp2.png" alt="Journal 18" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_HotDog2.png" alt="Journal 19" />
+        <img loading="lazy" src="img/Journal_HotDog2.png" alt="Journal 19" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_LuvYou.png" alt="Journal 20" />
+        <img loading="lazy" src="img/Journal_LuvYou.png" alt="Journal 20" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_DRAW.png" alt="Journal 21" />
+        <img loading="lazy" src="img/Journal_DRAW.png" alt="Journal 21" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_NotMe.png" alt="Journal 22" />
+        <img loading="lazy" src="img/Journal_NotMe.png" alt="Journal 22" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_CrowCob.png" alt="Journal 23" />
+        <img loading="lazy" src="img/Journal_CrowCob.png" alt="Journal 23" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_DogBoat.png" alt="Journal 24" />
+        <img loading="lazy" src="img/Journal_DogBoat.png" alt="Journal 24" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_GotHat.png" alt="Journal 25" />
+        <img loading="lazy" src="img/Journal_GotHat.png" alt="Journal 25" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_YourFear2.png" alt="Journal 26" />
+        <img loading="lazy" src="img/Journal_YourFear2.png" alt="Journal 26" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_CrackersPlease.png" alt="Journal 27" />
+        <img loading="lazy" src="img/Journal_CrackersPlease.png" alt="Journal 27" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_FishTree.png" alt="Journal 28" />
+        <img loading="lazy" src="img/Journal_FishTree.png" alt="Journal 28" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Cells.png" alt="Journal 29" />
+        <img loading="lazy" src="img/Journal_Cells.png" alt="Journal 29" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Split2.png" alt="Journal 30" />
+        <img loading="lazy" src="img/Journal_Split2.png" alt="Journal 30" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_SoftInTheMiddle.png" alt="Journal 31" />
+        <img loading="lazy" src="img/Journal_SoftInTheMiddle.png" alt="Journal 31" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_Drift.png" alt="Journal 32" />
+        <img loading="lazy" src="img/Journal_Drift.png" alt="Journal 32" />
       </div>
       <div class="gallery-item">
-        <img src="img/Journal_DerpDog.png" alt="Journal 33" />
+        <img loading="lazy" src="img/Journal_DerpDog.png" alt="Journal 33" />
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -513,27 +652,27 @@
       <!-- Each is a clickable link -->
       <a class="gallery-link" href="https://cute-grub.itch.io/lost-hats" target="_blank" rel="noopener">
         <div class="thumb">
-          <img src="img/LostHatsThumbnail.gif" alt="Misc 1" />
+          <img loading="lazy" src="img/LostHatsThumbnail.gif" alt="Misc 1" />
           <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
         </div>
       </a>
 
       <a class="gallery-link" href="https://cute-grub.itch.io/dream-cycle" target="_blank" rel="noopener">
         <div class="thumb">
-          <img src="img/DreamCycleThumbnail.png" alt="Misc 2" />
+          <img loading="lazy" src="img/DreamCycleThumbnail.png" alt="Misc 2" />
           <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
         </div>
       </a>
 
       <a class="gallery-link" href="https://cute-grub.itch.io/naga-in-the-colloseum" target="_blank" rel="noopener">
         <div class="thumb">
-          <img src="img/NagaThumb.png" alt="Misc 3" />
+          <img loading="lazy" src="img/NagaThumb.png" alt="Misc 3" />
           <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
         </div>
       </a>
 
       <div class="gallery-item">
-        <img src="img/Colorbase.png" alt="Misc 4" />
+        <img loading="lazy" src="img/Colorbase.png" alt="Misc 4" />
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -543,9 +682,9 @@
   <div id="about-panel" class="floating-panel">
     <img class="about-photo" src="img/aboutPhoto.webp" alt="Chase portrait" />
     <h2>CHASE</h2>
-    <p>Link: https://cute-grub.itch.io</p>
+    <p>Link: <a class="about-link" href="https://cute-grub.itch.io" target="_blank" rel="noopener">https://cute-grub.itch.io</a></p>
     <p></p>
-    <p>Contact: wchasec@gmail.com</p>
+    <p>Contact: <a class="about-link" href="mailto:wchasec@gmail.com">wchasec@gmail.com</a></p>
   </div>
 
   <!-- Button bar -->
@@ -643,6 +782,9 @@
       }
     };
 
+    const PHONE_QUERY = window.matchMedia("(max-width: 768px), (pointer: coarse) and (max-height: 500px)");
+    let isPhone = PHONE_QUERY.matches;
+
     let activeSection = null;
     let currentMood = MOODS.portraits;
 
@@ -682,10 +824,19 @@
       }
     }
 
+    let animating = false;
+    let lastW = 0, lastH = 0;
+
     function resize() {
       const dpr = window.devicePixelRatio || 1;
       const w = window.innerWidth;
       const h = window.innerHeight;
+
+      // Phone browsers resize a little when the address bar slides in/out.
+      // Skip those so the CHASE letters don't rebuild every time.
+      if (isPhone && w === lastW && Math.abs(h - lastH) < 120) return;
+      lastW = w;
+      lastH = h;
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;
@@ -698,7 +849,11 @@
       visibleCount = 0;
       doneBuild = false;
       lastTimestamp = 0;
-      requestAnimationFrame(animate);
+      // Start the draw loop once (each resize used to start another copy)
+      if (!animating) {
+        animating = true;
+        requestAnimationFrame(animate);
+      }
     }
 
     function generateTriangles() {
@@ -974,8 +1129,27 @@
     function attachArrows(galleryEl, stripEl) {
       const left = galleryEl.querySelector(".gallery-arrow.left");
       const right = galleryEl.querySelector(".gallery-arrow.right");
-      left.addEventListener("click", () => stripEl.scrollBy({ left: -SCROLL_AMOUNT, behavior: "smooth" }));
-      right.addEventListener("click", () => stripEl.scrollBy({ left: SCROLL_AMOUNT, behavior: "smooth" }));
+      // On phones each arrow tap moves exactly one image
+      const step = () => isPhone ? stripEl.clientWidth : SCROLL_AMOUNT;
+      left.addEventListener("click", () => stripEl.scrollBy({ left: -step(), behavior: "smooth" }));
+      right.addEventListener("click", () => stripEl.scrollBy({ left: step(), behavior: "smooth" }));
+    }
+
+    // "3 / 33" counter under the image (only shown on phones)
+    const counters = [];
+
+    function attachCounter(galleryEl, stripEl) {
+      const el = document.createElement("div");
+      el.className = "gallery-count";
+      galleryEl.appendChild(el);
+      const update = () => {
+        const total = stripEl.children.length;
+        const index = Math.round(stripEl.scrollLeft / Math.max(1, stripEl.clientWidth));
+        el.textContent = `${Math.min(index + 1, total)} / ${total}`;
+      };
+      stripEl.addEventListener("scroll", update, { passive: true });
+      counters.push(update);
+      update();
     }
 
     function setLightboxImage(index) {
@@ -1033,6 +1207,7 @@
 
       images.forEach((img, index) => {
         img.addEventListener("click", (e) => {
+          if (isPhone) return; // phones already show one big image at a time
           e.stopPropagation();
           openLightbox(images, index, galleryEl);
         });
@@ -1042,6 +1217,10 @@
     attachArrows(portraitsGallery, portraitsStrip);
     attachArrows(journalGallery, journalStrip);
     attachArrows(miscGallery, miscStrip);
+
+    attachCounter(portraitsGallery, portraitsStrip);
+    attachCounter(journalGallery, journalStrip);
+    attachCounter(miscGallery, miscStrip);
 
     attachLightboxToGalleryImages(portraitsGallery);
     attachLightboxToGalleryImages(journalGallery);
@@ -1074,6 +1253,17 @@
         showNextLightboxImage();
       }
     });
+
+    // ===== Phone detection =====
+    // Narrow screens, or touch screens held sideways (short), count as phones.
+    function updatePhoneMode() {
+      isPhone = PHONE_QUERY.matches;
+      document.documentElement.classList.toggle("phone", isPhone);
+      if (isPhone) closeLightbox();
+      counters.forEach((update) => update());
+    }
+    PHONE_QUERY.addEventListener("change", updatePhoneMode);
+    updatePhoneMode();
 
     // Start
     resize();
