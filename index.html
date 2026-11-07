@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>IWILLCHASE</title>
-  <meta name="description" content="Art by Chase: illustrated journal pages, portraits, and small games." />
+  <meta name="description" content="Art by Chase: sketchbook pages, portraits, and small games." />
   <meta name="theme-color" content="#000000" />
 
   <!-- Tab icon: a white triangle on black, like the CHASE field -->
@@ -14,11 +14,11 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://iwillchase.github.io/ChaseWeb/" />
   <meta property="og:title" content="IWILLCHASE" />
-  <meta property="og:description" content="Art by Chase: illustrated journal pages, portraits, and small games." />
+  <meta property="og:description" content="Art by Chase: sketchbook pages, portraits, and small games." />
   <meta property="og:image" content="https://iwillchase.github.io/ChaseWeb/img/og-image.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Three illustrated journal pages" />
+  <meta property="og:image:alt" content="Three sketchbook pages" />
   <meta name="twitter:card" content="summary_large_image" />
   <style>
     html, body {
@@ -524,13 +524,15 @@
       bottom: calc(16px + env(safe-area-inset-bottom));
       transform: none;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 12px;
     }
 
     .phone .button-bar button {
       padding: 16px 8px;
-      font-size: 18px;
+      /* 18px on most phones, shrinking a bit on very narrow ones so SKETCHBOOK fits */
+      font-size: clamp(14px, 4.5vw, 18px);
+      letter-spacing: 0.06em;
     }
 
     .phone .gallery {
@@ -689,108 +691,108 @@
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
   </div>
 
-  <!-- Journal gallery (overlay) -->
+  <!-- Sketchbook gallery (overlay; called "journal" in the code) -->
   <div id="journal-gallery" class="gallery" style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px);">
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="journal-strip">
       <div class="gallery-item" data-added="2026-02-05">
-        <img loading="lazy" src="img/Journal_BackToSleep3.webp" alt="Journal 1" />
+        <img loading="lazy" src="img/Journal_BackToSleep3.webp" alt="Sketchbook page 1" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_LostEye.webp" alt="Journal 2" />
+        <img loading="lazy" src="img/Journal_LostEye.webp" alt="Sketchbook page 2" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_Masks.webp" alt="Journal 3" />
+        <img loading="lazy" src="img/Journal_Masks.webp" alt="Sketchbook page 3" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_Mulaney.webp" alt="Journal 4" />
+        <img loading="lazy" src="img/Journal_Mulaney.webp" alt="Sketchbook page 4" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_Insane.webp" alt="Journal 5" />
+        <img loading="lazy" src="img/Journal_Insane.webp" alt="Sketchbook page 5" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_Swim.webp" alt="Journal 6" />
+        <img loading="lazy" src="img/Journal_Swim.webp" alt="Sketchbook page 6" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_Operation.webp" alt="Journal 7" />
+        <img loading="lazy" src="img/Journal_Operation.webp" alt="Sketchbook page 7" />
       </div>
       <div class="gallery-item" data-added="2026-02-05">
-        <img loading="lazy" src="img/Journal_Parts.webp" alt="Journal 8" />
+        <img loading="lazy" src="img/Journal_Parts.webp" alt="Sketchbook page 8" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_BigPlant.webp" alt="Journal 9" />
+        <img loading="lazy" src="img/Journal_BigPlant.webp" alt="Sketchbook page 9" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_YUP2.webp" alt="Journal 10" />
+        <img loading="lazy" src="img/Journal_YUP2.webp" alt="Sketchbook page 10" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_I_Bleed_test.webp" alt="Journal 11" />
+        <img loading="lazy" src="img/Journal_I_Bleed_test.webp" alt="Sketchbook page 11" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/naga.webp" alt="Journal 12" />
+        <img loading="lazy" src="img/naga.webp" alt="Sketchbook page 12" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_Wilde.webp" alt="Journal 13" />
+        <img loading="lazy" src="img/Journal_Wilde.webp" alt="Sketchbook page 13" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_OtherWay.webp" alt="Journal 14" />
+        <img loading="lazy" src="img/Journal_OtherWay.webp" alt="Sketchbook page 14" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_CityWarp.webp" alt="Journal 15" />
+        <img loading="lazy" src="img/Journal_CityWarp.webp" alt="Sketchbook page 15" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_Turtles.webp" alt="Journal 16" />
+        <img loading="lazy" src="img/Journal_Turtles.webp" alt="Sketchbook page 16" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_Blonde.webp" alt="Journal 17" />
+        <img loading="lazy" src="img/Journal_Blonde.webp" alt="Sketchbook page 17" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_FullDerp2.webp" alt="Journal 18" />
+        <img loading="lazy" src="img/Journal_FullDerp2.webp" alt="Sketchbook page 18" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_HotDog2.webp" alt="Journal 19" />
+        <img loading="lazy" src="img/Journal_HotDog2.webp" alt="Sketchbook page 19" />
       </div>
       <div class="gallery-item" data-added="2026-01-21">
-        <img loading="lazy" src="img/Journal_LuvYou.webp" alt="Journal 20" />
+        <img loading="lazy" src="img/Journal_LuvYou.webp" alt="Sketchbook page 20" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_DRAW.webp" alt="Journal 21" />
+        <img loading="lazy" src="img/Journal_DRAW.webp" alt="Sketchbook page 21" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_NotMe.webp" alt="Journal 22" />
+        <img loading="lazy" src="img/Journal_NotMe.webp" alt="Sketchbook page 22" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_CrowCob.webp" alt="Journal 23" />
+        <img loading="lazy" src="img/Journal_CrowCob.webp" alt="Sketchbook page 23" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_DogBoat.webp" alt="Journal 24" />
+        <img loading="lazy" src="img/Journal_DogBoat.webp" alt="Sketchbook page 24" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_GotHat.webp" alt="Journal 25" />
+        <img loading="lazy" src="img/Journal_GotHat.webp" alt="Sketchbook page 25" />
       </div>
       <div class="gallery-item" data-added="2026-02-01">
-        <img loading="lazy" src="img/Journal_YourFear2.webp" alt="Journal 26" />
+        <img loading="lazy" src="img/Journal_YourFear2.webp" alt="Sketchbook page 26" />
       </div>
       <div class="gallery-item" data-added="2026-02-05">
-        <img loading="lazy" src="img/Journal_CrackersPlease.webp" alt="Journal 27" />
+        <img loading="lazy" src="img/Journal_CrackersPlease.webp" alt="Sketchbook page 27" />
       </div>
       <div class="gallery-item" data-added="2026-02-09">
-        <img loading="lazy" src="img/Journal_FishTree.webp" alt="Journal 28" />
+        <img loading="lazy" src="img/Journal_FishTree.webp" alt="Sketchbook page 28" />
       </div>
       <div class="gallery-item" data-added="2026-02-09">
-        <img loading="lazy" src="img/Journal_Cells.webp" alt="Journal 29" />
+        <img loading="lazy" src="img/Journal_Cells.webp" alt="Sketchbook page 29" />
       </div>
       <div class="gallery-item" data-added="2026-02-09">
-        <img loading="lazy" src="img/Journal_Split2.webp" alt="Journal 30" />
+        <img loading="lazy" src="img/Journal_Split2.webp" alt="Sketchbook page 30" />
       </div>
       <div class="gallery-item" data-added="2026-02-09">
-        <img loading="lazy" src="img/Journal_SoftInTheMiddle.webp" alt="Journal 31" />
+        <img loading="lazy" src="img/Journal_SoftInTheMiddle.webp" alt="Sketchbook page 31" />
       </div>
       <div class="gallery-item" data-added="2026-02-09">
-        <img loading="lazy" src="img/Journal_Drift.webp" alt="Journal 32" />
+        <img loading="lazy" src="img/Journal_Drift.webp" alt="Sketchbook page 32" />
       </div>
       <div class="gallery-item" data-added="2026-02-09">
-        <img loading="lazy" src="img/Journal_DerpDog.webp" alt="Journal 33" />
+        <img loading="lazy" src="img/Journal_DerpDog.webp" alt="Sketchbook page 33" />
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -853,7 +855,7 @@
   <!-- Button bar -->
   <div class="button-bar" id="button-bar">
     <button id="btn-portraits">Portraits</button>
-    <button id="btn-journal">Journal</button>
+    <button id="btn-journal">Sketchbook</button>
     <button id="btn-misc">Misc</button>
     <button id="btn-about">About</button>
   </div>
