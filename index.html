@@ -24,7 +24,7 @@
       height: 100%;
       display: block;
       pointer-events: none;
-      z-index: 2; /* triangles ABOVE buttons by default */
+      z-index: 2; /* triangles above galleries' backdrop, below the buttons */
     }
 
     .button-bar {
@@ -34,11 +34,8 @@
       transform: translateX(-50%);
       display: flex;
       gap: 18px;
-      z-index: 1;
-      transition: z-index 0.15s ease;
+      z-index: 4; /* always above the triangle field */
     }
-
-    .button-bar.raised { z-index: 4; }
 
     .button-bar button {
       padding: 16px 36px;
@@ -419,14 +416,19 @@
       justify-content: center;
     }
 
+    /* Every image is the same 3:4 cropped tile, as big as fits the screen */
+    .phone .gallery-item,
+    .phone .gallery-link {
+      container-type: size;
+    }
+
     .phone .gallery-item img,
     .phone .gallery-link img {
-      width: auto;
+      width: min(100cqw, 75cqh);
       height: auto;
-      max-width: 100%;
       max-height: 100%;
-      aspect-ratio: auto;
-      object-fit: contain;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
       cursor: default;
     }
 
@@ -878,7 +880,8 @@
       const imageData = textCtx.getImageData(0, 0, w, h).data;
 
       triangles = [];
-      const cell = BASE_CELL;
+      // Phones get twice as many triangles (half the area per triangle)
+      const cell = isPhone ? BASE_CELL / Math.SQRT2 : BASE_CELL;
       const rows = Math.ceil(h / cell);
       const cols = Math.ceil(w / cell);
 
@@ -940,7 +943,8 @@
     function drawTriangles(count) {
       clearCanvas();
 
-      const cell = TRI_SIZE_CURRENT;
+      // Shrink to match the tighter phone grid so triangles tile instead of piling up
+      const cell = isPhone ? TRI_SIZE_CURRENT / Math.SQRT2 : TRI_SIZE_CURRENT;
       const o = currentMood.outline;
       const f = currentMood.fill;
 
@@ -996,7 +1000,8 @@
       lastTimestamp = timestamp;
 
       if (!doneBuild) {
-        visibleCount += DRAW_SPEED * dt;
+        // Double speed on phones so the denser field builds in the same time
+        visibleCount += DRAW_SPEED * (isPhone ? 2 : 1) * dt;
         if (visibleCount >= triangles.length) {
           visibleCount = triangles.length;
           doneBuild = true;
@@ -1064,11 +1069,6 @@
     let lightboxIndex = -1;
     let lightboxSourceGallery = null;
 
-    function updateRaisedState() {
-      const anySectionActive = (activeSection !== null);
-      buttonBar.classList.toggle("raised", anySectionActive);
-    }
-
     function setActiveButton(section) {
       portraitsBtn.classList.toggle("active", section === "portraits");
       journalBtn.classList.toggle("active", section === "journal");
@@ -1097,7 +1097,6 @@
         setActiveButton(null);
         closeAllOverlays();
         closeLightbox();
-        updateRaisedState();
         return;
       }
 
@@ -1115,7 +1114,6 @@
 
       applyMood(mood, { rebuild: false, rerollStyles: true });
       showOverlay(mood.overlay);
-      updateRaisedState();
     }
 
     portraitsBtn.addEventListener("click", (e) => activateSection("portraits", e));
