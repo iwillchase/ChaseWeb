@@ -376,6 +376,74 @@
       border: 1px solid rgba(255,255,255,0.12);
     }
 
+    /* Newsletter signup (About panel) */
+    .subscribe {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 26rem;
+    }
+
+    .subscribe[hidden] { display: none; }
+
+    .subscribe-title {
+      font-size: 13px !important;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 10px !important;
+    }
+
+    .subscribe-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .subscribe input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 16px; /* 16px+ stops iPhones zooming in on tap */
+      font-family: inherit;
+    }
+
+    .subscribe input::placeholder { color: rgba(255,255,255,0.5); }
+
+    .subscribe button {
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 2px solid #ffffffcc;
+      background: #f5f5f5;
+      color: black;
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    /* Clear focus ring for keyboard users */
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    .gallery-item img:focus-visible {
+      outline: 3px solid #ffffff;
+      outline-offset: 3px;
+    }
+
+    .gallery-link:focus-visible { outline: none; } /* its image gets the hover look instead */
+
+    /* People who turn on "reduce motion" get a still page */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     .about-link {
       color: inherit;
       text-decoration: underline;
@@ -703,6 +771,16 @@
     <p>Link: <a class="about-link" href="https://cute-grub.itch.io" target="_blank" rel="noopener">https://cute-grub.itch.io</a></p>
     <p></p>
     <p>Contact: <a class="about-link" href="mailto:wchasec@gmail.com">wchasec@gmail.com</a></p>
+
+    <!-- Shown once BUTTONDOWN_USER is set in the script below -->
+    <form id="subscribe-form" class="subscribe" method="post" target="_blank" hidden>
+      <p class="subscribe-title">Get an email when something new goes up</p>
+      <div class="subscribe-row">
+        <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address" />
+        <input type="hidden" name="embed" value="1" />
+        <button type="submit">Subscribe</button>
+      </div>
+    </form>
   </div>
 
   <!-- Button bar -->
@@ -739,7 +817,13 @@
     const DAMPING = 0.85;
     const INFLUENCE_RADIUS = 340;
     const MAX_FORCE = 70;
-    let scatterEnabled = true;
+    // "Reduce motion" setting on the device: no build-in, no scatter
+    const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let scatterEnabled = !REDUCED_MOTION.matches;
+    REDUCED_MOTION.addEventListener("change", () => {
+      scatterEnabled = !REDUCED_MOTION.matches;
+      wake();
+    });
 
     // Mood fade
     let moodIntensity = 0.0;
@@ -834,12 +918,14 @@
         generateTriangles();
         visibleCount = 0;
         doneBuild = false;
+        wake();
         return;
       }
 
       if (rerollStyles) {
         rerollFillStylesForMood(mood);
       }
+      wake();
     }
 
     let animating = false;
@@ -866,12 +952,16 @@
       generateTriangles();
       visibleCount = 0;
       doneBuild = false;
+      wake();
+    }
+
+    // Start the draw loop if it's asleep. It stops itself once nothing moves,
+    // so a settled page uses no battery.
+    function wake() {
+      if (animating) return;
+      animating = true;
       lastTimestamp = 0;
-      // Start the draw loop once (each resize used to start another copy)
-      if (!animating) {
-        animating = true;
-        requestAnimationFrame(animate);
-      }
+      requestAnimationFrame(animate);
     }
 
     function generateTriangles() {
@@ -934,6 +1024,7 @@
     }
 
     function updatePhysics(dt) {
+      let moving = false;
       const count = Math.floor(visibleCount);
       for (let i = 0; i < count && i < triangles.length; i++) {
         const t = triangles[i];
@@ -949,7 +1040,13 @@
 
         t.offsetX += t.vx * dt;
         t.offsetY += t.vy * dt;
+
+        if (!moving && (Math.abs(t.offsetX) > 0.05 || Math.abs(t.offsetY) > 0.05 ||
+                        Math.abs(t.vx) > 0.5 || Math.abs(t.vy) > 0.5)) {
+          moving = true;
+        }
       }
+      return moving; // true while any triangle is still springing back
     }
 
     function clearCanvas() {
@@ -1012,8 +1109,14 @@
 
     function animate(timestamp) {
       if (!lastTimestamp) lastTimestamp = timestamp;
-      const dt = (timestamp - lastTimestamp) / 1000;
+      const dt = Math.min(0.05, (timestamp - lastTimestamp) / 1000); // no jumps after a pause
       lastTimestamp = timestamp;
+
+      if (REDUCED_MOTION.matches) {
+        visibleCount = triangles.length;
+        doneBuild = true;
+        moodIntensity = moodIntensityTarget;
+      }
 
       if (!doneBuild) {
         // Double speed on phones so the denser field builds in the same time
@@ -1024,9 +1127,19 @@
         }
       }
 
-      updatePhysics(dt);
+      const moving = updatePhysics(dt);
 
       moodIntensity += (moodIntensityTarget - moodIntensity) * Math.min(1, dt * MOOD_FADE_SPEED);
+      const fading = Math.abs(moodIntensityTarget - moodIntensity) > 0.002;
+      if (!fading) moodIntensity = moodIntensityTarget;
+
+      if (doneBuild && !moving && !fading) {
+        // Everything has settled: draw one clean final frame and sleep
+        for (const t of triangles) { t.offsetX = t.offsetY = t.vx = t.vy = 0; }
+        drawTriangles(Math.floor(visibleCount));
+        animating = false;
+        return;
+      }
 
       drawTriangles(Math.floor(visibleCount));
       requestAnimationFrame(animate);
@@ -1035,6 +1148,7 @@
     function applyMouseImpulse(x, y) {
       if (!scatterEnabled) return;
 
+      let pushed = false;
       const count = Math.floor(visibleCount);
       for (let i = 0; i < count && i < triangles.length; i++) {
         const t = triangles[i];
@@ -1049,7 +1163,10 @@
 
         t.vx += (dx / dist) * force;
         t.vy += (dy / dist) * force;
+        pushed = true;
       }
+
+      if (pushed) wake();
     }
 
     window.addEventListener("mousemove", (e) => applyMouseImpulse(e.clientX, e.clientY));
@@ -1187,15 +1304,25 @@
       }
     }
 
+    let focusBeforeLightbox = null;
+
     function openLightbox(images, index, sourceGallery) {
+      focusBeforeLightbox = document.activeElement;
       lightboxImages = images;
       lightboxSourceGallery = sourceGallery;
       lightbox.classList.add("visible");
       lightbox.setAttribute("aria-hidden", "false");
       setLightboxImage(index);
+      lightboxNext.focus({ preventScroll: true });
     }
 
     function closeLightbox() {
+      const wasOpen = lightbox.classList.contains("visible");
+      // Put keyboard focus back on the image that was opened
+      if (wasOpen && focusBeforeLightbox && focusBeforeLightbox.focus) {
+        focusBeforeLightbox.focus({ preventScroll: true });
+      }
+      focusBeforeLightbox = null;
       lightbox.classList.remove("visible");
       lightbox.setAttribute("aria-hidden", "true");
       lightboxImage.src = "";
@@ -1220,9 +1347,20 @@
       const images = Array.from(galleryEl.querySelectorAll(".gallery-item img"));
 
       images.forEach((img, index) => {
+        // Reachable with Tab, opens with Enter or Space
+        img.tabIndex = 0;
+        img.setAttribute("role", "button");
+        img.setAttribute("aria-label", `View ${img.alt} full size`);
+
         img.addEventListener("click", (e) => {
           if (isPhone) return; // phones already show one big image at a time
           e.stopPropagation();
+          openLightbox(images, index, galleryEl);
+        });
+
+        img.addEventListener("keydown", (e) => {
+          if (isPhone || (e.key !== "Enter" && e.key !== " ")) return;
+          e.preventDefault();
           openLightbox(images, index, galleryEl);
         });
       });
@@ -1265,8 +1403,21 @@
         showPrevLightboxImage();
       } else if (e.key === "ArrowRight") {
         showNextLightboxImage();
+      } else if (e.key === "Tab") {
+        // Keep Tab inside the open viewer (just the ‹ and › buttons)
+        e.preventDefault();
+        (document.activeElement === lightboxNext ? lightboxPrev : lightboxNext).focus();
       }
     });
+
+    // ===== Newsletter signup =====
+    // Put your Buttondown username here (e.g. "iwillchase") to show the signup box.
+    const BUTTONDOWN_USER = "iwillchase";
+    const subscribeForm = document.getElementById("subscribe-form");
+    if (BUTTONDOWN_USER) {
+      subscribeForm.action = `https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}`;
+      subscribeForm.hidden = false;
+    }
 
     // ===== Phone detection =====
     // Narrow screens, or touch screens held sideways (short), count as phones.
