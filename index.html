@@ -1520,27 +1520,23 @@
       gc.async = true;
       gc.src = "https://gc.zgo.at/count.js";
       gc.dataset.goatcounter = `https://${GOATCOUNTER_CODE}.goatcounter.com/count`;
-      gc.addEventListener("load", flushTracking);
       document.body.appendChild(gc);
     }
 
-    // ===== Which art gets looked at most (GoatCounter events) =====
-    // Shows up in GoatCounter as e.g. "view/journal/Journal_BackToSleep3".
+    // ===== Which art gets looked at most (separate GoatCounter site) =====
+    // Art views, section opens and game clicks go to their OWN GoatCounter site,
+    // so the main site's visit, browser and phone numbers stay clean.
+    // Shows up there as e.g. "view/journal/Journal_BackToSleep3".
     // Each thing counts once per visit, so flipping back and forth doesn't inflate it.
+    const GOATCOUNTER_ART_CODE = "iwillchase-art";
     const tracked = new Set();
-    const pendingTracking = [];
 
     function trackOnce(path, title) {
-      if (!GOATCOUNTER_CODE || tracked.has(path)) return;
+      if (!GOATCOUNTER_ART_CODE || !location.protocol.startsWith("http") || tracked.has(path)) return;
       tracked.add(path);
-      pendingTracking.push({ path, title, event: true });
-      flushTracking();
-    }
-
-    function flushTracking() {
-      // count.js loads in the background; hold events until it's ready
-      if (!window.goatcounter || !window.goatcounter.count) return;
-      while (pendingTracking.length) window.goatcounter.count(pendingTracking.shift());
+      // GoatCounter's no-script counter: a tiny image request
+      const q = new URLSearchParams({ p: path, t: title, e: "true", rnd: Math.random().toString(36).slice(2) });
+      new Image().src = `https://${GOATCOUNTER_ART_CODE}.goatcounter.com/count?${q}`;
     }
 
     function artName(imgEl) {
