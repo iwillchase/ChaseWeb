@@ -1314,6 +1314,8 @@
 
       applyMood(mood, { rebuild: false, rerollStyles: true });
       showOverlay(mood.overlay);
+      trackOnce(`section/${section}`, `Opened ${section}`);
+      if (isPhone) scheduleViewCheck(document.getElementById(`${mood.overlay}-gallery`));
     }
 
     portraitsBtn.addEventListener("click", (e) => activateSection("portraits", e));
@@ -1361,6 +1363,7 @@
       lightboxImage.src = imgEl.src;
       lightboxImage.alt = imgEl.alt || "";
       lightboxCounter.textContent = `${lightboxIndex + 1} / ${lightboxImages.length}`;
+      trackArtView(lightboxSourceGallery, imgEl);
 
       if (lightboxSourceGallery && imgEl.closest(".gallery-item")) {
         imgEl.closest(".gallery-item").scrollIntoView({
@@ -1517,8 +1520,66 @@
       gc.async = true;
       gc.src = "https://gc.zgo.at/count.js";
       gc.dataset.goatcounter = `https://${GOATCOUNTER_CODE}.goatcounter.com/count`;
+      gc.addEventListener("load", flushTracking);
       document.body.appendChild(gc);
     }
+
+    // ===== Which art gets looked at most (GoatCounter events) =====
+    // Shows up in GoatCounter as e.g. "view/journal/Journal_BackToSleep3".
+    // Each thing counts once per visit, so flipping back and forth doesn't inflate it.
+    const tracked = new Set();
+    const pendingTracking = [];
+
+    function trackOnce(path, title) {
+      if (!GOATCOUNTER_CODE || tracked.has(path)) return;
+      tracked.add(path);
+      pendingTracking.push({ path, title, event: true });
+      flushTracking();
+    }
+
+    function flushTracking() {
+      // count.js loads in the background; hold events until it's ready
+      if (!window.goatcounter || !window.goatcounter.count) return;
+      while (pendingTracking.length) window.goatcounter.count(pendingTracking.shift());
+    }
+
+    function artName(imgEl) {
+      return decodeURIComponent(imgEl.src.split("/").pop().replace(/\.\w+$/, ""));
+    }
+
+    function trackArtView(galleryEl, imgEl) {
+      if (!galleryEl || !imgEl) return;
+      const section = galleryEl.id.replace("-gallery", "");
+      trackOnce(`view/${section}/${artName(imgEl)}`, `Viewed ${section}: ${artName(imgEl)}`);
+    }
+
+    // Phones: an image counts as viewed once someone stops on it for a second
+    const viewTimers = new Map();
+
+    function scheduleViewCheck(galleryEl) {
+      if (!galleryEl) return;
+      clearTimeout(viewTimers.get(galleryEl));
+      viewTimers.set(galleryEl, setTimeout(() => {
+        if (!isPhone || !galleryEl.classList.contains("visible")) return;
+        const strip = galleryEl.querySelector(".gallery-strip");
+        const index = Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth));
+        const item = strip.children[index];
+        trackArtView(galleryEl, item && item.querySelector("img"));
+      }, 1000));
+    }
+
+    for (const [galleryEl] of SECTION_BUTTONS) {
+      galleryEl.querySelector(".gallery-strip")
+        .addEventListener("scroll", () => { if (isPhone) scheduleViewCheck(galleryEl); }, { passive: true });
+    }
+
+    // Game tiles: count "Play Game!" clicks
+    document.querySelectorAll(".gallery-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        const game = link.href.split("/").filter(Boolean).pop();
+        trackOnce(`play/${game}`, `Clicked play: ${game}`);
+      });
+    });
 
     // ===== Newsletter signup =====
     // Put your Buttondown username here (e.g. "iwillchase") to show the signup box.
