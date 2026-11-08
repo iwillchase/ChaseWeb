@@ -555,8 +555,7 @@
     .group-label-empty::after { display: none; }
 
     /* Just text, no pill; a soft shadow keeps it readable over busy backgrounds */
-    .group-label span,
-    .phone .misc-group .gallery-link::after {
+    .group-label span {
       color: white;
       font-size: 13px;
       letter-spacing: 0.14em;
@@ -591,20 +590,11 @@
     }
 
     /* Phones show one tile at a time, so the label can't span the group:
-       tiles join the swipe row directly and each game gets its own small tag */
+       tiles join the swipe row directly and the label is hidden
+       ("Play Game!" is always shown on phones, which says enough) */
     .phone .misc-group,
     .phone .group-items { display: contents; }
     .phone .group-label { display: none; }
-
-    .phone .misc-group .gallery-link::after {
-      content: "Games";
-      position: absolute;
-      left: 50%;
-      top: calc(50% - var(--img-w) * 2 / 3 + 12px);
-      transform: translateX(-50%);
-      font-size: 12px;
-      pointer-events: none;
-    }
 
     /* Caption on tiles that aren't links (e.g. ColorBase).
        Looks and behaves like the "Play Game!" label: appears on hover, always shown on phones. */
