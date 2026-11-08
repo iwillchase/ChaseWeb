@@ -115,6 +115,8 @@
       gap: 16px;
       height: 100%;
       width: 100%;
+      box-sizing: border-box;
+      padding: 18px; /* room for the NEW star, which sticks out past the image corner */
       overflow-x: auto;
       scroll-behavior: smooth;
       scrollbar-width: none;
@@ -444,44 +446,48 @@
       }
     }
 
-    /* "NEW" tag on recently added pages, and a dot on that section's button */
-    .gallery-item { position: relative; }
+    /* NEW pages: a white "NEW" star on the image's top-right corner.
+       Its outline uses --new-color: the first color of the section's triangle
+       palette, or black for sections without colored triangles (set by the script). */
+    :root { --new-color: #c5d7e5; }
 
-    .new-badge {
+    .gallery-item,
+    .gallery-link { position: relative; }
+
+    .new-star {
       position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #f5f5f5;
-      color: black;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
+      top: -12px;
+      right: -12px;
+      width: 62px;
+      height: 62px;
+      transform: rotate(12deg);
+      z-index: 2;
       pointer-events: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.55));
     }
 
-    /* On phones the image is centered in a taller frame: pin the tag to the image's top edge
-       (the image is min(100cqw, 75cqh) wide at 3:4, so half its height is min(66.67cqw, 50cqh)) */
-    .phone .new-badge { top: calc(50% - min(66.67cqw, 50cqh) + 10px); }
+    .new-star svg { width: 100%; height: 100%; display: block; }
 
-    .button-bar button { position: relative; }
-
-    .button-bar button.has-new::after {
-      content: "";
-      position: absolute;
-      top: 6px;
-      right: 14px;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    .new-star polygon {
+      fill: #ffffff;
+      stroke: var(--new-color);
+      stroke-width: 3.5;
+      stroke-linejoin: round;
     }
 
-    .button-bar button.has-new.active::after { background: #000000; box-shadow: none; }
+    .new-star text {
+      fill: #000000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    /* Phones: the image is centered in a wider/taller frame, so pin the star to the
+       image's own corner (image is --img-w wide at 3:4, so half its height is --img-w * 2/3) */
+    .phone .new-star {
+      top: calc(50% - var(--img-w) * 2 / 3 - 12px);
+      right: calc(50% - var(--img-w) / 2 - 12px);
+    }
 
     /* Caption on tiles that aren't links (e.g. ColorBase).
        Looks and behaves like the "Play Game!" label: appears on hover, always shown on phones. */
@@ -527,7 +533,7 @@
       font-size: 13px;
       padding: 10px 14px;
       top: auto;
-      bottom: calc(50% - min(66.67cqw, 50cqh) + 14px);
+      bottom: calc(50% - var(--img-w) * 2 / 3 + 14px);
       transform: translateX(-50%);
     }
 
@@ -579,6 +585,7 @@
     /* One image per screen: swipe to the next one */
     .phone .gallery-strip {
       gap: 0;
+      padding: 18px 0; /* no side padding: keeps one image per swipe */
       scroll-snap-type: x mandatory;
     }
 
@@ -601,11 +608,13 @@
     .phone .gallery-item,
     .phone .gallery-link {
       container-type: size;
+      /* image width: fills the frame, leaving 18px each side for the NEW star */
+      --img-w: min(calc(100cqw - 36px), 75cqh);
     }
 
     .phone .gallery-item img,
     .phone .gallery-link img {
-      width: min(100cqw, 75cqh);
+      width: var(--img-w);
       height: auto;
       max-height: 100%;
       aspect-ratio: 3 / 4;
@@ -932,8 +941,8 @@
     const PALETTES = {
       journal: [
         ["#264653","#2a9d8f","#e9c46a","#f4a261","#e76f51"],
-        ["#B38D84","#DEBB95","#F8EACF","#F8F5EC","#C5D7E5"],
-        ["#f7f3e8","#bacdb0","#729b79","#475b63","2e2c2f"],
+        ["#C5D7E5","#B38D84","#DEBB95","#F8EACF","#F8F5EC"], // Sketchbook (blue first = NEW color)
+        ["#f7f3e8","#bacdb0","#729b79","#475b63","#2e2c2f"],
         ["#331832","#d81e5b","#f0544f","#c6d8d3","#fdf0d5"],
         ["#cee5f2","#accbe1","#7c98b3","#637081","#536b78"],
         ["#d9ed92","#b5e48c","#99d98c","#76c893","#52b69a","#34a0a4","#168aad","#1a759f","#1e6091","#184e77"],
@@ -1345,6 +1354,7 @@
       }
 
       applyMood(mood, { rebuild: false, rerollStyles: true });
+      setNewColor(mood);
       showOverlay(mood.overlay);
       trackOnce(`section/${section}`, `Opened ${section}`);
       if (isPhone) scheduleViewCheck(document.getElementById(`${mood.overlay}-gallery`));
@@ -1468,6 +1478,16 @@
       });
     }
 
+    // Shuffle the sketchbook pages into a new random order on every visit,
+    // new pages included (their NEW tag and the button dot help people find them).
+    // Runs before the viewer and counters are set up, so they use the shuffled order.
+    const NEW_PAGE_DAYS = 45; // how long a page counts as NEW
+    (function shuffleSketchbook() {
+      const items = Array.from(journalStrip.children);
+      shuffle(items);
+      items.forEach((el) => journalStrip.appendChild(el));
+    })();
+
     attachArrows(portraitsGallery, portraitsStrip);
     attachArrows(journalGallery, journalStrip);
     attachArrows(miscGallery, miscStrip);
@@ -1520,28 +1540,52 @@
 
     // ===== "NEW" tags =====
     // Any gallery item with data-added="YYYY-MM-DD" from the last NEW_DAYS days
-    // gets a NEW tag, and its section button gets a dot.
-    const NEW_DAYS = 45;
+    // gets a colored border and a NEW star.
+    const NEW_DAYS = NEW_PAGE_DAYS; // same window as the sketchbook shuffle
     const SECTION_BUTTONS = [
       [portraitsGallery, portraitsBtn],
       [journalGallery, journalBtn],
       [miscGallery, miscBtn],
     ];
 
-    for (const [galleryEl, btn] of SECTION_BUTTONS) {
-      let anyNew = false;
+    // A 12-point "sticker" starburst for the NEW tag
+    const NEW_STAR_SVG = (() => {
+      const pts = [];
+      for (let i = 0; i < 24; i++) {
+        const r = i % 2 ? 24 : 31;
+        const a = (i * Math.PI) / 12 - Math.PI / 2;
+        pts.push(`${(32 + r * Math.cos(a)).toFixed(1)},${(32 + r * Math.sin(a)).toFixed(1)}`);
+      }
+      // "NEW" drawn in the star itself, centered on the capital letters:
+      // baseline sits ~0.36 of the font size below the middle, so the caps' midline is at 32
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="${pts.join(" ")}"/>` +
+             `<text x="32" y="${(32 + 14 * 0.36).toFixed(1)}" text-anchor="middle">NEW</text></svg>`;
+    })();
+
+    for (const [galleryEl] of SECTION_BUTTONS) {
       galleryEl.querySelectorAll("[data-added]").forEach((item) => {
         const added = new Date(item.dataset.added + "T00:00:00");
         const days = (Date.now() - added) / 86400000;
         if (days >= 0 && days <= NEW_DAYS) {
-          const badge = document.createElement("div");
-          badge.className = "new-badge";
-          badge.textContent = "NEW";
-          item.appendChild(badge);
-          anyNew = true;
+          item.classList.add("is-new");
+          const star = document.createElement("div");
+          star.className = "new-star";
+          star.innerHTML = NEW_STAR_SVG;
+          item.appendChild(star);
         }
       });
-      btn.classList.toggle("has-new", anyNew);
+    }
+
+    // Rule: the NEW star's outline uses the FIRST color of the section's triangle
+    // palette (reorder that palette in PALETTES to change it). Sections whose
+    // triangles aren't filled with color (Portraits) use black.
+    function setNewColor(mood) {
+      let color = "#000000";
+      if (mood.fill.enabled) {
+        const group = PALETTES[mood.fill.paletteKey] || [["#000000"]];
+        color = group[Math.max(0, Math.min(mood.fill.paletteIndex, group.length - 1))][0];
+      }
+      document.documentElement.style.setProperty("--new-color", color);
     }
 
     // ===== Visitor counts (GoatCounter: free, no cookies) =====
