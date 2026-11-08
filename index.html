@@ -523,6 +523,89 @@
       right: calc(50% - var(--img-w) / 2 - 12px);
     }
 
+    /* Misc sub-categories: a "———— GAMES ————" label spanning a group of tiles */
+    /* The label tucks up into the strip's top padding, so the tiles start only
+       ~6px lower than in the other sections */
+    .misc-group {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: calc(100% + 14px);
+      margin-top: -14px;
+      gap: 4px;
+    }
+
+    .group-label {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .group-label::before,
+    .group-label::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.45);
+    }
+
+    .group-label-empty::before,
+    .group-label-empty::after { display: none; }
+
+    /* Just text, no pill; a soft shadow keeps it readable over busy backgrounds */
+    .group-label span,
+    .phone .misc-group .gallery-link::after {
+      color: white;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6);
+    }
+
+    .group-items {
+      display: flex;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Grouped tiles get an exact 3:4 width from the strip's height (minus the
+       label row), so the group, and its label line, is exactly as wide as its tiles.
+       (Phone rules further down override this.) */
+    .gallery-strip { container-type: size; }
+
+    .group-items > .gallery-link,
+    .group-items > .gallery-item {
+      width: calc((100cqh - 6px) * 3 / 4); /* tile height = strip height + 14px tuck - 16px label - 4px gap */
+      height: 100%;
+    }
+
+    .group-items .thumb { width: 100%; }
+
+    .group-items img {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Phones show one tile at a time, so the label can't span the group:
+       tiles join the swipe row directly and each game gets its own small tag */
+    .phone .misc-group,
+    .phone .group-items { display: contents; }
+    .phone .group-label { display: none; }
+
+    .phone .misc-group .gallery-link::after {
+      content: "Games";
+      position: absolute;
+      left: 50%;
+      top: calc(50% - var(--img-w) * 2 / 3 + 12px);
+      transform: translateX(-50%);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
     /* Caption on tiles that aren't links (e.g. ColorBase).
        Looks and behaves like the "Play Game!" label: appears on hover, always shown on phones. */
     .tile-caption {
@@ -891,31 +974,42 @@
   <div id="misc-gallery" class="gallery" style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px);">
     <button class="gallery-arrow left" type="button" aria-label="Scroll left">‹</button>
     <div class="gallery-strip" id="misc-strip">
-      <!-- Each is a clickable link -->
-      <a class="gallery-link" href="https://cute-grub.itch.io/lost-hats" target="_blank" rel="noopener">
-        <div class="thumb">
-          <img loading="lazy" src="img/LostHatsThumbnail.gif" alt="Misc 1" />
-          <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
-        </div>
-      </a>
+      <!-- Games group: a "———— GAMES ————" label spanning the game tiles -->
+      <div class="misc-group">
+        <div class="group-label"><span>Games</span></div>
+        <div class="group-items">
+          <a class="gallery-link" href="https://cute-grub.itch.io/lost-hats" target="_blank" rel="noopener">
+            <div class="thumb">
+              <img loading="lazy" src="img/LostHatsThumbnail.gif" alt="Lost Hats (game)" />
+              <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
+            </div>
+          </a>
 
-      <a class="gallery-link" href="https://cute-grub.itch.io/dream-cycle" target="_blank" rel="noopener">
-        <div class="thumb">
-          <img loading="lazy" src="img/DreamCycleThumbnail.webp" alt="Misc 2" />
-          <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
-        </div>
-      </a>
+          <a class="gallery-link" href="https://cute-grub.itch.io/dream-cycle" target="_blank" rel="noopener">
+            <div class="thumb">
+              <img loading="lazy" src="img/DreamCycleThumbnail.webp" alt="Dream Cycle (game)" />
+              <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
+            </div>
+          </a>
 
-      <a class="gallery-link" href="https://cute-grub.itch.io/naga-in-the-colloseum" target="_blank" rel="noopener">
-        <div class="thumb">
-          <img loading="lazy" src="img/NagaThumb.webp" alt="Misc 3" />
-          <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
+          <a class="gallery-link" href="https://cute-grub.itch.io/naga-in-the-colloseum" target="_blank" rel="noopener">
+            <div class="thumb">
+              <img loading="lazy" src="img/NagaThumb.webp" alt="Naga in the Colosseum (game)" />
+              <div class="cta"><span>Play Game!</span><span aria-hidden="true">↗</span></div>
+            </div>
+          </a>
         </div>
-      </a>
+      </div>
 
-      <div class="gallery-item captioned">
-        <img loading="lazy" src="img/Colorbase.webp" alt="ColorBase: a number system made of colors" />
-        <div class="tile-caption">ColorBase · work in progress</div>
+      <!-- Not a game: same layout with an empty label row so the tiles line up -->
+      <div class="misc-group">
+        <div class="group-label group-label-empty"></div>
+        <div class="group-items">
+          <div class="gallery-item captioned">
+            <img loading="lazy" src="img/Colorbase.webp" alt="ColorBase: a number system made of colors" />
+            <div class="tile-caption">ColorBase · work in progress</div>
+          </div>
+        </div>
       </div>
     </div>
     <button class="gallery-arrow right" type="button" aria-label="Scroll right">›</button>
@@ -1440,7 +1534,7 @@
       el.className = "gallery-count";
       galleryEl.appendChild(el);
       const update = () => {
-        const total = stripEl.children.length;
+        const total = stripEl.querySelectorAll(".gallery-item, .gallery-link").length; // tiles, even inside groups
         const index = Math.round(stripEl.scrollLeft / Math.max(1, stripEl.clientWidth));
         el.textContent = `${Math.min(index + 1, total)} / ${total}`;
       };
@@ -1690,7 +1784,7 @@
         if (!isPhone || !galleryEl.classList.contains("visible")) return;
         const strip = galleryEl.querySelector(".gallery-strip");
         const index = Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth));
-        const item = strip.children[index];
+        const item = strip.querySelectorAll(".gallery-item, .gallery-link")[index];
         trackArtView(galleryEl, item && item.querySelector("img"));
       }, 1000));
     }
