@@ -249,13 +249,21 @@
     .gallery-arrow.left { left: 12px; }
     .gallery-arrow.right { right: 12px; }
 
+    /* About panel: sits in the space ABOVE the section buttons and centers itself
+       there (top/bottom insets + fit-content height + auto margins), so it never
+       overlaps the buttons on short screens. */
     .floating-panel {
       position: fixed;
-      top: 50%;
+      top: 16px;
+      bottom: calc((100vh - 65vh) / 4 + 80px);
       left: 50%;
-      transform: translate(-50%, -55%);
+      height: fit-content;
+      max-height: calc(100vh - 16px - (100vh - 65vh) / 4 - 80px);
+      margin: auto 0;
+      overflow-y: auto;
+      transform: translateX(-50%);
       width: min(70vw, 700px);
-      padding: 32px 48px;
+      padding: 28px 40px;
       background: rgba(0,0,0,0.35);
       backdrop-filter: blur(10px);
       border-radius: 20px;
@@ -297,6 +305,33 @@
       font-size: 15px;
       line-height: 1.6;
       max-width: 32rem;
+    }
+
+    /* About panel: photo, name, one-line intro, links, divider, subscribe */
+    .about-bio { color: rgba(255,255,255,0.85); font-size: 16px !important; margin: 0 0 8px !important; }
+
+    .about-links {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      font-size: 16px !important;
+    }
+
+    .about-sep { color: rgba(255,255,255,0.5); }
+
+    .about-divider {
+      width: 70%;
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      margin: 20px 0 18px;
+    }
+
+    /* Shorter screens: smaller photo so it all fits without scrolling */
+    @media (max-height: 760px) {
+      .about-photo { width: 110px; height: 110px; margin-bottom: 12px; }
+      .about-divider { margin: 14px 0 12px; }
     }
 
     .lightbox {
@@ -382,7 +417,6 @@
 
     /* Newsletter signup (About panel) */
     .subscribe {
-      margin-top: 20px;
       width: 100%;
       max-width: 26rem;
     }
@@ -390,11 +424,9 @@
     .subscribe[hidden] { display: none; }
 
     .subscribe-title {
-      font-size: 13px !important;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.8);
-      margin-bottom: 10px !important;
+      font-size: 15px !important;
+      color: rgba(255,255,255,0.85);
+      margin: 0 0 10px !important;
     }
 
     .subscribe-row {
@@ -656,9 +688,11 @@
     }
 
     .phone .floating-panel {
-      top: calc(50% - 70px);
+      top: calc(16px + env(safe-area-inset-top));
+      bottom: calc(160px + env(safe-area-inset-bottom));
+      max-height: calc(100vh - 176px);
       width: calc(100vw - 32px);
-      padding: 24px 20px;
+      padding: 22px 20px;
     }
 
     .phone .floating-panel p { font-size: 17px; }
@@ -686,13 +720,27 @@
         right: calc(16px + env(safe-area-inset-right));
       }
 
-      .phone .floating-panel { top: calc(50% - 30px); padding: 16px 20px; }
-      .phone .about-photo { width: 80px; height: 80px; margin-bottom: 8px; }
+      .phone .floating-panel {
+        top: 10px;
+        bottom: calc(66px + env(safe-area-inset-bottom));
+        max-height: calc(100vh - 76px);
+        padding: 14px 20px;
+      }
+      /* Sideways phones are short: compact About panel so it fits without scrolling */
+      .phone .about-photo { width: 64px; height: 64px; margin-bottom: 6px; }
+      .phone .floating-panel h2 { font-size: 20px; margin-bottom: 2px; }
+      .phone .floating-panel p { font-size: 14px; margin: 2px 0; }
+      .phone .about-bio { font-size: 14px !important; margin-bottom: 2px !important; }
+      .phone .about-links { font-size: 14px !important; }
+      .phone .about-divider { margin: 8px 0 8px; }
+      .phone .subscribe-title { font-size: 13px !important; margin-bottom: 6px !important; }
+      .phone .subscribe input,
+      .phone .subscribe button { padding-top: 8px; padding-bottom: 8px; }
     }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translate(-50%, -48%); }
-      to   { opacity: 1; transform: translate(-50%, -55%); }
+      from { opacity: 0; transform: translate(-50%, 8px); }
+      to   { opacity: 1; transform: translate(-50%, 0); }
     }
   </style>
 </head>
@@ -877,14 +925,19 @@
   <div id="about-panel" class="floating-panel">
     <img class="about-photo" src="img/aboutPhoto.webp" alt="Chase portrait" />
     <h2>CHASE</h2>
-    <p>Link: <a class="about-link" href="https://cute-grub.itch.io" target="_blank" rel="noopener">https://cute-grub.itch.io</a></p>
-    <p></p>
-    <!-- The address is put together by the script on click, so it never sits in the page for spam bots -->
-    <p>Contact: <button type="button" id="contact-btn" class="about-link contact-btn">Email me</button></p>
+    <p class="about-bio">I draw, paint, and make small games.</p>
+    <p class="about-links">
+      <a class="about-link" href="https://cute-grub.itch.io" target="_blank" rel="noopener">Play my games ↗</a>
+      <span class="about-sep" aria-hidden="true">·</span>
+      <!-- The address is put together by the script on click, so it never sits in the page for spam bots -->
+      <button type="button" id="contact-btn" class="about-link contact-btn">Email me</button>
+    </p>
+
+    <hr class="about-divider" />
 
     <!-- Shown once BUTTONDOWN_USER is set in the script below -->
     <form id="subscribe-form" class="subscribe" method="post" target="_blank" hidden>
-      <p class="subscribe-title">Get an email when something new goes up</p>
+      <p class="subscribe-title">Get a note when something new goes up</p>
       <div class="subscribe-row">
         <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address" />
         <input type="hidden" name="embed" value="1" />
