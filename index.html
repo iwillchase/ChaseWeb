@@ -56,21 +56,23 @@
     .button-bar button {
       padding: 16px 36px;
       border-radius: 999px;
-      border: 2px solid #ffffffcc;
-      background: #000000dd;
+      /* Frosted glass: the triangle field's colors show through, blurred */
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      background: rgba(0, 0, 0, 0.5);
       color: white;
       font-size: 20px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       cursor: pointer;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       transition: 0.2s ease;
     }
 
     @media (hover: hover) {
       .button-bar button:hover {
         border-color: #ffffff;
-        background: #111111ee;
+        background: rgba(0, 0, 0, 0.65); /* a little darker on hover, still glassy */
         transform: translateY(-2px);
       }
     }
