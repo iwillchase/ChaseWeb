@@ -1814,6 +1814,16 @@
 
     // Start
     resize();
+
+    // ===== Links straight to a section =====
+    // e.g. .../ChaseWeb/#sketchbook opens the Sketchbook (used by the newsletter)
+    const SECTION_LINKS = { portraits: "portraits", sketchbook: "journal", journal: "journal", misc: "misc", games: "misc", about: "about" };
+    function openFromHash() {
+      const section = SECTION_LINKS[location.hash.slice(1).toLowerCase()];
+      if (section && activeSection !== section) activateSection(section);
+    }
+    window.addEventListener("hashchange", openFromHash);
+    openFromHash();
   </script>
 </body>
 </html>
