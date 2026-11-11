@@ -163,7 +163,7 @@
   <div class="ref" id="ref"></div>
 
   <h2>Places</h2>
-  <p class="places">Each place up adds an ending, the way "ten" and "hundred" do. Reading <code>12</code> in ColorBase gives <b>Red-er Green</b> (one 8 and two 1s, or 10). Blacks are said too, because they change the color: <code>7</code> is <b>White</b>, but <code>07</code> is <b>Black-er White</b>, a darker gray.<br>
+  <p class="places">Each place up adds an ending, the way "ten" and "hundred" do. Reading <code>12</code> in ColorBase gives <b>Red-er Green</b> (one 8 and two 1s, or 10). Black digits in the middle are silent: <code>102</code> is <b>Red-est Green</b>. Only a leading Black is said, because it changes the color: <code>7</code> is <b>White</b>, but <code>007</code> is <b>Black-est White</b>, a dark gray.<br>
     <span id="placeList"></span></p>
 
   <h2>Any color in ColorBase</h2>
@@ -196,11 +196,13 @@
     return out;
   }
 
-  // Every digit is said, Blacks included, so the name matches the swatch:
-  // 007 is "Black-est Black-er White", a much darker color than 7 "White".
+  // Black digits are silent, except a leading Black in the top place: its
+  // ending tells you how many digits there are, so the name matches the
+  // swatch. 007 is "Black-est White", a much darker color than 7 "White".
   function nameOf(n, minDigits = 1) {
-    return digitsOf(n, minDigits).map((d, place) => COLORS[d] + PLACES[place])
-      .reverse().join(" ");
+    const ds = digitsOf(n, minDigits), top = ds.length - 1;
+    return ds.map((d, place) => d || place === top ? COLORS[d] + PLACES[place] : "")
+      .filter(Boolean).reverse().join(" ");
   }
 
   // Whole-number color: each place adds one bit to each channel, then the
