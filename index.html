@@ -730,11 +730,17 @@
       cursor: default;
     }
 
-    .phone .gallery-link .cta {
+    /* Always shown on phones, so it sits at the image's bottom edge (like the
+       ColorBase caption) instead of covering the middle of the picture */
+    .phone .gallery-link .cta,
+    .phone .gallery-link:hover .cta,
+    .phone .gallery-link:focus-visible .cta {
       opacity: 1;
-      transform: translate(-50%, -50%);
-      font-size: 15px;
-      padding: 12px 18px;
+      font-size: 13px;
+      padding: 10px 14px;
+      top: auto;
+      bottom: calc(50% - var(--img-w) * 2 / 3 + 14px);
+      transform: translateX(-50%);
     }
 
     .phone .gallery-arrow {
