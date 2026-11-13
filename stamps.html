@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Layer Stamps</title>
+  <meta name="description" content="Stamp see-through layers of Chase's drawings onto a page, or turn your own drawing into a stamp." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='black'/%3E%3Cpath d='M16 6 L27 25 H5 Z' fill='none' stroke='white' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #000;
+      --panel: #141414;
+      --line: #2a2a2a;
+      --text: #f2f2f2;
+      --muted: #9a9a9a;
+      --key: #1e1e1e;
+      --key-hover: #2c2c2c;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; }
+    a { color: var(--text); }
+    .back { font-size: 14px; color: var(--muted); text-decoration: none; }
+    .back:hover { color: var(--text); }
+    h1 { margin: 18px 0 4px; font-size: 30px; letter-spacing: 0.04em; }
+    .lede { margin: 0 0 20px; color: var(--muted); line-height: 1.5; max-width: 640px; }
+    h2 { font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 36px 0 12px; }
+    h3 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+
+    .studio { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+
+    /* ---- the page ---- */
+    .page {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 3 / 4;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      touch-action: manipulation;
+    }
+    .page canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #ghost { cursor: crosshair; }
+    .page-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    /* ---- controls ---- */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .tray { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .tray .tile { position: relative; aspect-ratio: 1; }
+    .tray .pick, .tray label {
+      width: 100%; height: 100%;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      background: #f4efe4;
+      padding: 4px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .tray img, .tray canvas { max-width: 100%; max-height: 100%; display: block; }
+    .tray .pick[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #000 inset; }
+    .tray .pick:focus-visible, .tray .edit:focus-visible, .tray label:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+    /* little pencil on the picked stamp only, so the tray stays calm */
+    .tray .edit {
+      position: absolute; top: -6px; right: -6px;
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 1px solid #fff; background: #111; color: #fff;
+      font-size: 13px; line-height: 1; cursor: pointer; padding: 0;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .tray .tile.selected .edit { display: flex; }
+    .tray .edit:hover { background: #333; }
+    .tray label {
+      background: var(--key); border: 1px dashed #555; color: var(--muted);
+      flex-direction: column; font-size: 11px; text-align: center; gap: 2px; line-height: 1.2;
+    }
+    .tray label b { font-size: 22px; color: var(--text); font-weight: 400; }
+    .tray input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+    .slider { display: grid; grid-template-columns: 64px 1fr 44px; align-items: center; gap: 8px; font-size: 14px; }
+    .slider span:last-child { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+    input[type=range] { width: 100%; accent-color: #f2f2f2; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chips button, .actions button {
+      font: inherit; font-size: 14px;
+      color: var(--text); background: var(--key);
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 8px 14px; cursor: pointer;
+    }
+    .chips button:hover, .actions button:hover { background: var(--key-hover); }
+    .chips button[aria-pressed="true"] { background: #f2f2f2; color: #000; }
+    .swatch-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid #666; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .actions .primary { background: #f2f2f2; color: #000; }
+    .actions .primary:hover { background: #fff; }
+    .actions button:disabled { opacity: 0.4; cursor: default; }
+    .note { font-size: 13px; color: var(--muted); min-height: 1em; }
+
+    /* ---- examples ---- */
+    .examples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .examples img { width: 100%; display: block; border-radius: 6px; background: #fff; }
+    /* landscape piece gets its own row; capped so the 587px original isn't stretched too far */
+    .examples .wide { grid-column: 1 / -1; justify-self: center; width: min(100%, 880px); }
+    .how { color: var(--muted); line-height: 1.6; max-width: 640px; }
+    footer { margin-top: 40px; font-size: 13px; color: var(--muted); }
+
+    /* ---- stamp editor (pop-up) ---- */
+    dialog#editor {
+      width: min(920px, calc(100vw - 24px));
+      max-height: calc(100dvh - 24px);
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      color: var(--text);
+    }
+    dialog#editor::backdrop { background: rgba(0,0,0,0.78); }
+    .ed-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ed-head h3 { margin: 0; }
+    .ed-stage { display: flex; justify-content: center; }
+    .ed-wrap {
+      position: relative;
+      border-radius: 6px; overflow: hidden;
+      background: repeating-conic-gradient(#d9d9d9 0 25%, #ffffff 0 50%) 0 0 / 20px 20px;
+    }
+    .ed-wrap canvas { display: block; max-width: 100%; max-height: min(62dvh, 720px); }
+    #edOverlay { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; touch-action: none; cursor: crosshair; }
+    .ed-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; }
+    .ed-controls .slider { flex: 1 1 220px; }
+    .ed-hint { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 1em; }
+    .ed-actions { display: flex; gap: 8px; margin-left: auto; }
+
+    @media (max-width: 820px) {
+      .studio { grid-template-columns: 1fr; }
+      .page { margin: 0 auto; }
+      .page-hint { text-align: center; }
+    }
+    @media (max-width: 520px) {
+      .examples { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="./#misc">← iwillchase</a>
+  <h1>Layer Stamps</h1>
+  <p class="lede">I turn my paintings into see-through layers: the white paper disappears and the paint stays, so layers stack like washes of watercolor. Pick a layer, then click or tap the page to stamp it. Stack a few and see what happens.</p>
+
+  <div class="studio">
+    <div>
+      <div class="page" id="page">
+        <canvas id="art" width="1200" height="1600" aria-label="Your stamped page"></canvas>
+        <canvas id="ghost" width="1200" height="1600" aria-hidden="true"></canvas>
+      </div>
+      <div class="page-hint">Click or tap to stamp · drag to erase · Ctrl+Z to undo</div>
+    </div>
+
+    <div class="panel">
+      <div>
+        <h3>Layers</h3>
+        <div class="tray" id="tray">
+          <label title="Use your own drawing">
+            <input type="file" id="upload" accept="image/*" />
+            <b>+</b>Your drawing
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <h3>Tool</h3>
+        <div class="chips">
+          <button type="button" id="toolStamp" aria-pressed="true">Stamp</button>
+          <button type="button" id="toolErase" aria-pressed="false">Eraser</button>
+        </div>
+        <div class="slider" id="eraserRow" hidden style="margin-top:10px"><span>Eraser</span><input type="range" id="eraser" min="10" max="240" value="70" /><span id="eraserOut"></span></div>
+      </div>
+
+      <div>
+        <h3>Stamp</h3>
+        <div class="slider"><span>Size</span><input type="range" id="size" min="10" max="150" value="55" /><span id="sizeOut"></span></div>
+        <div class="slider"><span>Turn</span><input type="range" id="turn" min="-180" max="180" value="0" /><span id="turnOut"></span></div>
+        <div class="slider"><span>See-thru</span><input type="range" id="fade" min="0" max="90" value="0" /><span id="fadeOut"></span></div>
+        <div class="chips" style="margin-top:10px">
+          <button type="button" id="flip" aria-pressed="false">Flip</button>
+          <button type="button" id="multiply" aria-pressed="false" title="Layers darken each other like overlapping ink">Ink mix</button>
+        </div>
+      </div>
+
+      <div>
+        <h3>Paper</h3>
+        <div class="chips" id="papers"></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="undo" disabled>Undo</button>
+        <button type="button" id="clear" disabled>Clear</button>
+        <button type="button" class="primary" id="save" disabled>Save picture</button>
+      </div>
+      <div class="note" id="note"></div>
+    </div>
+  </div>
+
+  <h2>Some of mine</h2>
+  <div class="examples">
+    <img loading="lazy" src="img/stamps/example1.webp" alt="A portrait layered over a sketchbook page" />
+    <img loading="lazy" src="img/stamps/example2.webp" alt="The same portrait stacked three times, shifted" />
+    <img loading="lazy" src="img/stamps/example3.webp" alt="A portrait layered with a blurred copy of itself" />
+    <img loading="lazy" class="wide" src="img/stamps/example4.webp" alt="A portrait stamped over itself, each copy spun a little" />
+  </div>
+
+  <h2>How it works</h2>
+  <p class="how">Each pixel is checked for how much paper is showing through. Pure white paper becomes fully see-through, and the paper's light is subtracted from everything else, so the ink keeps its real color. It's a small Python script I wrote; this page runs the same steps in your browser. A drawing you add stays on your device and is never uploaded.</p>
+
+  <footer>Made by Chase · <a href="./#misc">more on my site</a></footer>
+</main>
+
+<dialog id="editor" aria-labelledby="edTitle">
+  <div class="ed-head">
+    <h3 id="edTitle">Edit stamp</h3>
+    <div class="actions"><button type="button" id="edCancel">✕ Cancel</button></div>
+  </div>
+  <div class="ed-stage">
+    <div class="ed-wrap">
+      <canvas id="edCanvas" width="10" height="10" aria-label="The stamp you're editing"></canvas>
+      <canvas id="edOverlay" width="10" height="10" aria-hidden="true"></canvas>
+    </div>
+  </div>
+  <div class="ed-controls">
+    <div class="chips">
+      <button type="button" id="edKeep" aria-pressed="true">Keep</button>
+      <button type="button" id="edErase" aria-pressed="false">Erase</button>
+    </div>
+    <div class="slider" id="edSizeRow" hidden><span>Size</span><input type="range" id="edSize" min="6" max="120" value="36" /><span id="edSizeOut"></span></div>
+    <div class="ed-actions actions">
+      <button type="button" id="edUndo" disabled>Undo</button>
+      <button type="button" class="primary" id="edDone">Done</button>
+    </div>
+  </div>
+  <div class="ed-hint" id="edHint"></div>
+</dialog>
+
+<script>
+  // Watercolors first (what the see-through layers are really for), then ink drawings
+  const STAMPS = [9, 18, 10, 11, 12, 13, 14, 15, 16, 17, 1, 2, 3, 4, 5, 6, 7, 8];
+  const PAPERS = [
+    { name: "White", color: "#ffffff" },
+    { name: "Cream", color: "#f4efe4" },
+    { name: "Sky", color: "#c5d7e5" },
+    { name: "Night", color: "#1d2230" },
+  ];
+
+  const $ = id => document.getElementById(id);
+  const art = $("art"), ghost = $("ghost");
+  const actx = art.getContext("2d"), gctx = ghost.getContext("2d");
+  const W = art.width, H = art.height;
+
+  const state = {
+    sources: [],        // { el: image or canvas, url: full-size file to load on first pick (null for your own drawing) }
+    current: null,      // index into sources
+    layers: [],         // stamped layers, redrawn in order
+    paper: PAPERS[0].color,
+    tool: "stamp",      // "stamp" or "erase"
+    flip: false,
+    multiply: false,
+  };
+
+  // ===== Drawing =====
+  function stampSettings() {
+    return {
+      size: +$("size").value / 100,
+      turn: +$("turn").value * Math.PI / 180,
+      alpha: 1 - +$("fade").value / 100,
+      flip: state.flip,
+      multiply: state.multiply,
+    };
+  }
+
+  function drawStamp(ctx, src, x, y, s) {
+    if (!src.width) return; // still loading; redraw() runs again once it arrives
+    const w = W * s.size * (src.scaleHint || 1), h = w * (src.height / src.width);
+    ctx.save();
+    ctx.globalAlpha = s.alpha;
+    ctx.globalCompositeOperation = s.multiply ? "multiply" : "source-over";
+    ctx.translate(x, y);
+    ctx.rotate(s.turn);
+    if (s.flip) ctx.scale(-1, 1);
+    ctx.drawImage(src, -w / 2, -h / 2, w, h);
+    ctx.restore();
+  }
+
+  // Stamps and eraser strokes live on a see-through "ink" canvas; the paper is
+  // laid under it each time, so erasing shows the paper (whatever color it is now).
+  const ink = document.createElement("canvas");
+  ink.width = W; ink.height = H;
+  const ictx = ink.getContext("2d");
+
+  function composite() {
+    actx.globalCompositeOperation = "source-over";
+    actx.globalAlpha = 1;
+    actx.fillStyle = state.paper;
+    actx.fillRect(0, 0, W, H);
+    actx.drawImage(ink, 0, 0);
+  }
+
+  const eraseSegment = (a, b, size) => eraseLine(ictx, a, b, size); // eraseLine is in the editor section
+
+  function updateButtons() {
+    const empty = state.layers.length === 0;
+    $("undo").disabled = $("clear").disabled = $("save").disabled = empty;
+  }
+
+  function redraw() {
+    ictx.clearRect(0, 0, W, H);
+    for (const l of state.layers) {
+      if (l.erase) l.points.forEach((p, i) => eraseSegment(l.points[Math.max(0, i - 1)], p, l.size));
+      else drawStamp(ictx, l.src, l.x, l.y, l.s);
+    }
+    composite();
+    updateButtons();
+  }
+
+  let lastPoint = null;
+  function drawGhost(p) {
+    gctx.clearRect(0, 0, W, H);
+    lastPoint = p;
+    if (!p) return;
+    if (state.tool === "erase") {
+      // eraser outline: white ring with a dark ring inside, visible on any paper
+      const r = +$("eraser").value / 2;
+      gctx.beginPath();
+      gctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      gctx.lineWidth = 5; gctx.strokeStyle = "rgba(255,255,255,0.9)"; gctx.stroke();
+      gctx.lineWidth = 2; gctx.strokeStyle = "rgba(0,0,0,0.7)"; gctx.stroke();
+      return;
+    }
+    if (state.current === null) return;
+    const s = stampSettings();
+    s.alpha *= 0.5;
+    s.multiply = false;
+    drawStamp(gctx, state.sources[state.current].el, p.x, p.y, s);
+  }
+
+  function toPagePoint(e) {
+    const r = ghost.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+  }
+
+  // ===== Stamping =====
+  let stroke = null; // the eraser stroke being dragged right now
+
+  ghost.addEventListener("pointerdown", e => {
+    if (state.tool !== "erase") return;
+    const p = toPagePoint(e);
+    stroke = { erase: true, size: +$("eraser").value, points: [p] };
+    state.layers.push(stroke);
+    ghost.setPointerCapture(e.pointerId);
+    eraseSegment(p, p, stroke.size);
+    composite();
+    updateButtons();
+  });
+  ghost.addEventListener("pointermove", e => {
+    const p = toPagePoint(e);
+    if (stroke) {
+      const last = stroke.points[stroke.points.length - 1];
+      stroke.points.push(p);
+      eraseSegment(last, p, stroke.size);
+      composite();
+    }
+    if (e.pointerType === "mouse") drawGhost(p);
+  });
+  ghost.addEventListener("pointerleave", () => { if (!stroke) drawGhost(null); });
+  ghost.addEventListener("pointercancel", () => { stroke = null; });
+  ghost.addEventListener("pointerup", e => {
+    if (stroke) { stroke = null; if (e.pointerType !== "mouse") drawGhost(null); return; }
+    if (state.tool === "erase" || state.current === null) return;
+    const p = toPagePoint(e);
+    state.layers.push({ src: state.sources[state.current].el, x: p.x, y: p.y, s: stampSettings() });
+    redraw();
+    $("note").textContent = "";
+    if (e.pointerType !== "mouse") drawGhost(null);
+  });
+
+  // ===== Layer tray =====
+  function setTool(tool) {
+    state.tool = tool;
+    $("toolStamp").setAttribute("aria-pressed", String(tool === "stamp"));
+    $("toolErase").setAttribute("aria-pressed", String(tool === "erase"));
+    $("eraserRow").hidden = tool !== "erase";
+    ghost.style.touchAction = tool === "erase" ? "none" : ""; // dragging erases instead of scrolling
+    drawGhost(lastPoint);
+  }
+  $("toolStamp").addEventListener("click", () => setTool("stamp"));
+  $("toolErase").addEventListener("click", () => setTool("erase"));
+
+  function select(i) {
+    if (state.tool === "erase") setTool("stamp"); // picking a layer means you want to stamp
+    state.current = i;
+    const s = state.sources[i];
+    if (s.url && !s.el.src) s.el.src = s.url; // full-size layer loads only once picked
+    state.sources.forEach((src, j) => {
+      src.tile.classList.toggle("selected", j === i);
+      src.tile.querySelector(".pick").setAttribute("aria-pressed", String(j === i));
+    });
+    if (lastPoint) drawGhost(lastPoint);
+  }
+
+  // A tray tile: the stamp itself (pick) plus a small ✎ that shows once it's picked.
+  // `after` puts the new tile right after that source's tile (used for edited copies).
+  function addSource(el, thumb, label, url = null, after = null) {
+    const i = state.sources.length;
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pick";
+    b.setAttribute("aria-label", label);
+    b.setAttribute("aria-pressed", "false");
+    b.appendChild(thumb);
+    b.addEventListener("click", () => select(i));
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "edit";
+    edit.textContent = "✎";
+    edit.title = "Edit this stamp";
+    edit.setAttribute("aria-label", `Edit ${label}`);
+    edit.addEventListener("click", () => openEditor(i));
+    tile.append(b, edit);
+    state.sources.push({ el, url, tile });
+    const before = after !== null ? state.sources[after].tile.nextSibling : $("tray").querySelector("label");
+    $("tray").insertBefore(tile, before);
+    return i;
+  }
+
+  function makeThumb(layer) {
+    const thumb = document.createElement("canvas");
+    const t = Math.min(1, 160 / Math.max(layer.width, layer.height));
+    thumb.width = Math.max(1, Math.round(layer.width * t));
+    thumb.height = Math.max(1, Math.round(layer.height * t));
+    thumb.getContext("2d").drawImage(layer, 0, 0, thumb.width, thumb.height);
+    return thumb;
+  }
+
+  STAMPS.forEach((num, n) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => {
+      if (state.layers.some(l => l.src === img)) redraw();
+      if (lastPoint) drawGhost(lastPoint);
+    };
+    const thumb = new Image();
+    thumb.src = `img/stamps/thumbs/stamp${num}.webp`;
+    thumb.alt = "";
+    const i = addSource(img, thumb, `Layer ${n + 1}`, `img/stamps/stamp${num}.webp`);
+    if (n === 0) select(i);
+  });
+
+  // ===== Your own drawing → see-through layer (same steps as makeTransparent.py) =====
+  function unwhite(img) {
+    const scale = Math.min(1, 1200 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    const data = ctx.getImageData(0, 0, c.width, c.height);
+    const px = data.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const m = Math.min(r, g, b);          // how much paper is showing
+      let a = 255 - m;                      // recovered alpha
+      if (a < 28) { px[i + 3] = 0; continue; } // faint paper tint and scanner gray
+      px[i]     = Math.min(255, ((r - m) * 255 / a) | 0);  // paper removed,
+      px[i + 1] = Math.min(255, ((g - m) * 255 / a) | 0);  // straight color
+      px[i + 2] = Math.min(255, ((b - m) * 255 / a) | 0);
+      px[i + 3] = a;
+    }
+    ctx.putImageData(data, 0, 0);
+    return c;
+  }
+
+  $("upload").addEventListener("change", e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const layer = unwhite(img);
+      URL.revokeObjectURL(url);
+      select(addSource(layer, makeThumb(layer), "Your drawing"));
+      $("note").textContent = "Your drawing is now a layer. Tap ✎ to trim it. Works best with dark ink on white paper.";
+    };
+    img.onerror = () => { $("note").textContent = "That file didn't open as a picture."; };
+    img.src = url;
+  });
+
+  // ===== Stamp editor: Keep (draw a loop around what you want) and Erase =====
+  // Edits are a list of steps replayed over a copy of the original, so Undo is
+  // easy and the original stamp is never changed. Done saves a new, trimmed stamp.
+  const ed = { canvas: $("edCanvas"), overlay: $("edOverlay"), base: null, ops: [], tool: "keep", from: null, live: null, scale: 1 };
+  const ectx = ed.canvas.getContext("2d", { willReadFrequently: true });
+  const octx = ed.overlay.getContext("2d");
+
+  function eraseLine(ctx, a, b, size) {
+    ctx.save();
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineCap = ctx.lineJoin = "round";
+    ctx.lineWidth = size;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x, b.y, size / 2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function tracePath(ctx, pts) {
+    ctx.beginPath();
+    pts.forEach((p, k) => k ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  }
+
+  function edApply(op) {
+    if (op.type === "erase") {
+      op.points.forEach((p, k) => eraseLine(ectx, op.points[Math.max(0, k - 1)], p, op.size));
+    } else {
+      ectx.save();
+      ectx.globalCompositeOperation = "destination-in"; // keep only what's inside the loop
+      tracePath(ectx, op.points);
+      ectx.closePath();
+      ectx.fill();
+      ectx.restore();
+    }
+  }
+
+  function edRender() {
+    ectx.clearRect(0, 0, ed.canvas.width, ed.canvas.height);
+    ectx.drawImage(ed.base, 0, 0);
+    ed.ops.forEach(edApply);
+    $("edUndo").disabled = ed.ops.length === 0;
+  }
+
+  function edPoint(e) {
+    const r = ed.overlay.getBoundingClientRect();
+    const scale = ed.canvas.width / r.width; // image pixels per screen pixel
+    return { x: (e.clientX - r.left) * scale, y: (e.clientY - r.top) * scale, scale };
+  }
+
+  function edDrawOverlay(p) {
+    octx.clearRect(0, 0, ed.overlay.width, ed.overlay.height);
+    const s = ed.scale;
+    if (ed.live && ed.live.type === "keep") {
+      tracePath(octx, ed.live.points);
+      octx.lineWidth = 4 * s; octx.setLineDash([]); octx.strokeStyle = "rgba(255,255,255,0.95)"; octx.stroke();
+      octx.lineWidth = 2 * s; octx.setLineDash([8 * s, 6 * s]); octx.strokeStyle = "#000"; octx.stroke();
+      octx.setLineDash([]);
+    }
+    if (p && ed.tool === "erase") {
+      octx.beginPath();
+      octx.arc(p.x, p.y, +$("edSize").value * s / 2, 0, Math.PI * 2);
+      octx.lineWidth = 4 * s; octx.strokeStyle = "rgba(255,255,255,0.9)"; octx.stroke();
+      octx.lineWidth = 2 * s; octx.strokeStyle = "rgba(0,0,0,0.7)"; octx.stroke();
+    }
+  }
+
+  function setEdTool(tool) {
+    ed.tool = tool;
+    $("edKeep").setAttribute("aria-pressed", String(tool === "keep"));
+    $("edErase").setAttribute("aria-pressed", String(tool === "erase"));
+    $("edSizeRow").hidden = tool !== "erase";
+    $("edHint").textContent = tool === "keep"
+      ? "Draw a loop around the part you want to keep. Everything outside it goes."
+      : "Drag over anything you don't want, like borders or stray marks.";
+  }
+  $("edKeep").addEventListener("click", () => setEdTool("keep"));
+  $("edErase").addEventListener("click", () => setEdTool("erase"));
+  $("edSize").addEventListener("input", () => { $("edSizeOut").textContent = $("edSize").value; });
+  $("edSizeOut").textContent = $("edSize").value;
+
+  async function openEditor(i) {
+    const src = state.sources[i].el;
+    if (src instanceof HTMLImageElement && !src.naturalWidth) {
+      if (!src.src) src.src = state.sources[i].url;
+      $("note").textContent = "Loading that stamp…";
+      await new Promise(r => src.addEventListener("load", r, { once: true }));
+      $("note").textContent = "";
+    }
+    const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
+    ed.base = document.createElement("canvas");
+    ed.base.width = w; ed.base.height = h;
+    ed.base.getContext("2d").drawImage(src, 0, 0, w, h);
+    ed.canvas.width = ed.overlay.width = w;
+    ed.canvas.height = ed.overlay.height = h;
+    ed.ops = []; ed.from = i; ed.live = null;
+    setEdTool("keep");
+    edRender();
+    $("editor").showModal();
+  }
+
+  ed.overlay.addEventListener("pointerdown", e => {
+    const p = edPoint(e);
+    ed.scale = p.scale;
+    ed.overlay.setPointerCapture(e.pointerId);
+    if (ed.tool === "erase") {
+      ed.live = { type: "erase", size: +$("edSize").value * p.scale, points: [p] };
+      eraseLine(ectx, p, p, ed.live.size);
+    } else {
+      ed.live = { type: "keep", points: [p] };
+    }
+    edDrawOverlay(p);
+  });
+  ed.overlay.addEventListener("pointermove", e => {
+    const p = edPoint(e);
+    ed.scale = p.scale;
+    if (ed.live) {
+      const pts = ed.live.points, last = pts[pts.length - 1];
+      if (Math.hypot(p.x - last.x, p.y - last.y) > 2 * p.scale) {
+        pts.push(p);
+        if (ed.live.type === "erase") eraseLine(ectx, last, p, ed.live.size);
+      }
+    }
+    if (ed.live || e.pointerType === "mouse") edDrawOverlay(p);
+  });
+  ed.overlay.addEventListener("pointerup", e => {
+    if (!ed.live) return;
+    const op = ed.live;
+    ed.live = null;
+    if (op.type === "erase" || op.points.length >= 3) ed.ops.push(op);
+    edRender();
+    edDrawOverlay(e.pointerType === "mouse" ? edPoint(e) : null);
+    if (op.type === "keep" && op.points.length >= 3)
+      $("edHint").textContent = "Kept what's inside your loop. Loop again to trim more, or press Done.";
+  });
+  ed.overlay.addEventListener("pointercancel", () => { ed.live = null; edRender(); edDrawOverlay(null); });
+  ed.overlay.addEventListener("pointerleave", () => { if (!ed.live) edDrawOverlay(null); });
+
+  function edUndo() { if (ed.ops.length) { ed.ops.pop(); edRender(); } }
+  $("edUndo").addEventListener("click", edUndo);
+  $("edCancel").addEventListener("click", () => $("editor").close());
+
+  // Cut away the empty space around what's left, so the new stamp centers nicely
+  function trimToInk(c) {
+    const w = c.width, h = c.height;
+    let px;
+    try { px = ectx.getImageData(0, 0, w, h).data; }
+    catch (err) {
+      // Opened from a local file, the browser won't let the page read pixels: keep it untrimmed
+      const copy = document.createElement("canvas");
+      copy.width = w; copy.height = h;
+      copy.getContext("2d").drawImage(c, 0, 0);
+      return copy;
+    }
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (px[(y * w + x) * 4 + 3] > 8) {
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (x1 < 0) return null;
+    const pad = 6;
+    x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+    x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+    const out = document.createElement("canvas");
+    out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+    out.getContext("2d").drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+    return out;
+  }
+
+  $("edDone").addEventListener("click", () => {
+    if (!ed.ops.length) { $("editor").close(); return; }
+    const out = trimToInk(ed.canvas);
+    if (!out) { $("edHint").textContent = "There's nothing left. Undo, or Cancel."; return; }
+    // an edited piece stamps at the size it had in the original, not blown up to full size
+    const orig = state.sources[ed.from].el;
+    out.scaleHint = (orig.scaleHint || 1) * out.width / ed.canvas.width;
+    const i = addSource(out, makeThumb(out), "Edited layer", null, ed.from);
+    $("editor").close();
+    select(i);
+    $("note").textContent = "Your edited stamp is in the tray, next to the original.";
+  });
+
+  // ===== Controls =====
+  function syncSliders() {
+    $("sizeOut").textContent = $("size").value + "%";
+    $("turnOut").textContent = $("turn").value + "°";
+    $("fadeOut").textContent = $("fade").value + "%";
+    $("eraserOut").textContent = $("eraser").value;
+    if (lastPoint) drawGhost(lastPoint);
+  }
+  ["size", "turn", "fade", "eraser"].forEach(id => $(id).addEventListener("input", syncSliders));
+  $("turn").addEventListener("dblclick", () => { $("turn").value = 0; syncSliders(); });
+
+  function toggle(id, key) {
+    $(id).addEventListener("click", () => {
+      state[key] = !state[key];
+      $(id).setAttribute("aria-pressed", String(state[key]));
+      if (lastPoint) drawGhost(lastPoint);
+    });
+  }
+  toggle("flip", "flip");
+  toggle("multiply", "multiply");
+
+  PAPERS.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(i === 0));
+    b.innerHTML = `<span class="swatch-dot" style="background:${p.color}"></span>${p.name}`;
+    b.addEventListener("click", () => {
+      state.paper = p.color;
+      document.querySelectorAll("#papers button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      redraw();
+    });
+    $("papers").appendChild(b);
+  });
+
+  function undo() { state.layers.pop(); redraw(); }
+  $("undo").addEventListener("click", undo);
+  $("clear").addEventListener("click", () => {
+    if (state.layers.length > 3 && !confirm("Clear the whole page?")) return;
+    state.layers = [];
+    redraw();
+  });
+  document.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return;
+    if ($("editor").open) { e.preventDefault(); edUndo(); return; } // undo inside the editor
+    if (state.layers.length) { e.preventDefault(); undo(); }
+  });
+
+  $("save").addEventListener("click", () => {
+    try {
+      art.toBlob(blob => {
+        if (!blob) { $("note").textContent = "Couldn't save the picture."; return; }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "layer-stamps.png";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }, "image/png");
+    } catch (err) {
+      // Opening the page straight from a file (not the website) blocks saving
+      $("note").textContent = "Saving only works on the website, not from a local file.";
+    }
+  });
+
+  syncSliders();
+  redraw();
+
+  // Page visits (same GoatCounter site as the main page)
+  if (location.protocol.startsWith("http")) {
+    const gc = document.createElement("script");
+    gc.async = true;
+    gc.src = "https://gc.zgo.at/count.js";
+    gc.dataset.goatcounter = "https://iwillchase.goatcounter.com/count";
+    document.body.appendChild(gc);
+  }
+</script>
+</body>
+</html>
